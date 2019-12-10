@@ -7,6 +7,8 @@ import { ConnectProps, ConnectState } from '@/models/connect';
 import { CurrentUser } from '@/models/user';
 import HeaderDropdown from '../HeaderDropdown';
 import styles from './index.less';
+import {getContextUrl} from "@/utils/request";
+import urls from "@/utils/urls";
 
 export interface GlobalHeaderRightProps extends ConnectProps {
   currentUser?: CurrentUser;
@@ -36,10 +38,12 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
     const {
       currentUser = {
         avatar: '',
-        name: '',
+        username: '',
+        id: '',
       },
       menu,
     } = this.props;
+    console.log(menu);
     const menuHeaderDropdown = (
       <Menu className={styles.menu} selectedKeys={[]} onClick={this.onMenuClick}>
         {menu && (
@@ -62,11 +66,11 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
         </Menu.Item>
       </Menu>
     );
-    return currentUser && currentUser.name ? (
+    return currentUser && currentUser.id ? (
       <HeaderDropdown overlay={menuHeaderDropdown}>
         <span className={`${styles.action} ${styles.account}`}>
-          <Avatar size="small" className={styles.avatar} src={currentUser.avatar} alt="avatar" />
-          <span className={styles.name}>{currentUser.name}</span>
+          <Avatar size="small" className={styles.avatar} src={getContextUrl(`${urls.ATTACH_URL}/${currentUser.avatar}`)} alt="avatar" />
+          <span className={styles.name}>{currentUser.username}</span>
         </span>
       </HeaderDropdown>
     ) : (
@@ -83,4 +87,5 @@ class AvatarDropdown extends React.Component<GlobalHeaderRightProps> {
 
 export default connect(({ user }: ConnectState) => ({
   currentUser: user.currentUser,
+  menu: user.menu,
 }))(AvatarDropdown);

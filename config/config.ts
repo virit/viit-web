@@ -96,14 +96,19 @@ export default {
           routes: [
             {
               path: '/',
-              redirect: '/welcome',
+              redirect: '/dashboard',
             },
             {
-              path: '/welcome',
-              name: 'welcome',
+              name: '分析页',
               icon: 'smile',
-              component: './Welcome',
-            },
+              path: '/dashboard',
+              component: './dashboard',
+            }, // {
+            //   path: '/welcome',
+            //   name: 'welcome',
+            //   icon: 'smile',
+            //   component: './Welcome',
+            // },
             {
               path: '/admin',
               name: 'admin',
@@ -117,18 +122,30 @@ export default {
               path: '/sys',
               routes: [
                 {
-                  name: '数据字典',
-                  icon: 'smile',
-                  path: '/sys/dict',
-                  component: './sys/dict',
-                },
-                {
                   name: '用户管理',
                   icon: 'user',
                   path: '/sys/user',
                   component: './sys/user',
                 },
+                {
+                  name: '角色类型',
+                  icon: 'smile',
+                  path: '/sys/roletype',
+                  component: './sys/roleType',
+                },
+                {
+                  name: '角色管理',
+                  icon: 'smile',
+                  path: '/sys/role',
+                  component: './sys/role',
+                },
               ],
+            },
+            {
+              name: '个人设置',
+              icon: 'smile',
+              path: '/accountsettings',
+              component: './AccountSettings',
             },
             {
               component: './404',
@@ -164,7 +181,7 @@ export default {
         resourcePath: string;
       },
       _: string,
-      localName: string,
+      localName: string
     ) => {
       if (
         context.resourcePath.includes('node_modules') ||
