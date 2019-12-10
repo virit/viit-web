@@ -45,7 +45,7 @@ const errorHandler = (error: { response: Response }): Response => {
   return response;
 };
 
-const prefix = '/api'
+const prefix = '/api';
 /**
  * 配置request请求时的默认参数
  */

@@ -122,7 +122,13 @@ export default {
                   path: '/sys/dict',
                   component: './sys/dict',
                 },
-              ]
+                {
+                  name: '用户管理',
+                  icon: 'user',
+                  path: '/sys/user',
+                  component: './sys/user',
+                },
+              ],
             },
             {
               component: './404',
@@ -158,7 +164,7 @@ export default {
         resourcePath: string;
       },
       _: string,
-      localName: string
+      localName: string,
     ) => {
       if (
         context.resourcePath.includes('node_modules') ||

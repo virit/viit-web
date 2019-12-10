@@ -4,48 +4,52 @@ import {
   Col,
   DatePicker,
   Divider,
+  Dropdown,
   Form,
   Icon,
   Input,
   InputNumber,
   Menu,
   message,
+  Popconfirm,
   Row,
   Select,
 } from 'antd';
-import React, {Component, Fragment} from 'react';
+import React, { Component, Fragment } from 'react';
 
-import {Action, Dispatch} from 'redux';
-import {FormComponentProps} from 'antd/es/form';
-import {PageHeaderWrapper} from '@ant-design/pro-layout';
-import {SorterResult} from 'antd/es/table';
-import {connect} from 'dva';
-import {StateType} from './model';
+import { Action, Dispatch } from 'redux';
+import { FormComponentProps } from 'antd/es/form';
+import { PageHeaderWrapper } from '@ant-design/pro-layout';
+import { SorterResult } from 'antd/es/table';
+import { connect } from 'dva';
+import { StateType } from './model';
 import CreateForm from './components/CreateForm';
-import StandardTable, {StandardTableColumnProps} from './components/StandardTable';
-import UpdateForm, {FormValueType} from './components/UpdateForm';
-import {TableListItem, TableListPagination, TableListParams} from './data.d';
+import StandardTable, { StandardTableColumnProps } from './components/StandardTable';
+import UpdateForm, { FormValueType } from './components/UpdateForm';
+import { TableListItem, TableListPagination, TablePageQuery } from './data.d';
 
 import styles from './style.less';
 
 const FormItem = Form.Item;
 const { Option } = Select;
-const getValue = (obj: { [x: string]: string[] }) =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
+// const getValue = (obj: { [x: string]: string[] }) =>
+//   Object.keys(obj)
+//     .map(key => obj[key])
+//     .join(',');
 
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<
     Action<
-      | 'sysAnddict/add'
-      | 'sysAnddict/fetch'
-      | 'sysAnddict/remove'
-      | 'sysAnddict/update'
+      | 'sysUser/add'
+      | 'sysUser/fetch'
+      | 'sysUser/remove'
+      | 'sysUser/update'
+      | 'sysUser/setPageSize'
+      | 'sysUser/setCurrent'
     >
   >;
   loading: boolean;
-  sysAnddict: StateType;
+  sysUser: StateType;
 }
 
 interface TableListState {
@@ -55,23 +59,24 @@ interface TableListState {
   selectedRows: TableListItem[];
   formValues: { [key: string]: string };
   stepFormValues: Partial<TableListItem>;
+  current: number;
 }
 
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
-    sysAnddict,
+    sysUser,
     loading,
   }: {
-    sysAnddict: StateType;
+    sysUser: StateType;
     loading: {
       models: {
         [key: string]: boolean;
       };
     };
   }) => ({
-    sysAnddict,
-    loading: loading.models.sysAnddict,
+    sysUser,
+    loading: loading.models.sysUser,
   }),
 )
 class TableList extends Component<TableListProps, TableListState> {
@@ -82,34 +87,39 @@ class TableList extends Component<TableListProps, TableListState> {
     selectedRows: [],
     formValues: {},
     stepFormValues: {},
+    current: 1,
   };
 
   columns: StandardTableColumnProps[] = [
     {
-      title: '字典名称',
-      dataIndex: 'name',
-    },
-    {
-      title: '字典标识',
-      dataIndex: 'code',
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
+      title: '用户名',
+      dataIndex: 'username',
     },
     {
       title: '创建时间',
       dataIndex: 'createDate',
+      sorter: true,
+    },
+    {
+      title: '更新时间',
+      dataIndex: 'updateDate',
     },
     {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleUpdateModalVisible(true, record)}>配置</a>
+          <a onClick={() => this.handleUpdateModalVisible(true, record)}>修改</a>
           <Divider type="vertical" />
-          <a href="">修改</a>
-          <Divider type="vertical" />
-          <a href="">删除</a>
+          <Popconfirm
+            title="确定删除此用户吗?"
+            onConfirm={() => {
+              this.handleRemove(record.id);
+            }}
+            okText="是"
+            cancelText="否"
+          >
+            <a href="">删除</a>
+          </Popconfirm>
         </Fragment>
       ),
     },
@@ -117,8 +127,24 @@ class TableList extends Component<TableListProps, TableListState> {
 
   componentDidMount() {
     const { dispatch } = this.props;
+    const query: TablePageQuery = {
+      page: {
+        size: 10,
+        current: 1,
+      },
+      fields: {},
+    };
     dispatch({
-      type: 'sysAnddict/fetch',
+      type: 'sysUser/fetch',
+      payload: query,
+    });
+  }
+
+  handleRemove(id: string) {
+    const { dispatch } = this.props;
+    dispatch({
+      type: 'sysUser/remove',
+      payload: id,
     });
   }
 
@@ -130,24 +156,27 @@ class TableList extends Component<TableListProps, TableListState> {
     const { dispatch } = this.props;
     const { formValues } = this.state;
 
-    const filters = Object.keys(filtersArg).reduce((obj, key) => {
-      const newObj = { ...obj };
-      newObj[key] = getValue(filtersArg[key]);
-      return newObj;
-    }, {});
+    // const filters = Object.keys(filtersArg).reduce((obj, key) => {
+    //   const newObj = { ...obj };
+    //   newObj[key] = getValue(filtersArg[key]);
+    //   return newObj;
+    // }, {});
 
-    const params: Partial<TableListParams> = {
-      currentPage: pagination.current,
-      pageSize: pagination.pageSize,
-      ...formValues,
-      ...filters,
+    const params: Partial<TablePageQuery> = {
+      page: {
+        current: pagination.current,
+        size: pagination.pageSize,
+      },
+      fields: {
+        ...formValues,
+      },
     };
     if (sorter.field) {
-      params.sorter = `${sorter.field}_${sorter.order}`;
+      // params.sorter = `${sorter.field}_${sorter.order}`;
     }
 
     dispatch({
-      type: 'sysAnddict/fetch',
+      type: 'sysUser/fetch',
       payload: params,
     });
   };
@@ -155,11 +184,15 @@ class TableList extends Component<TableListProps, TableListState> {
   handleFormReset = () => {
     const { form, dispatch } = this.props;
     form.resetFields();
+    dispatch({
+      type: 'sysUser/setCurrent',
+      payload: 1,
+    });
     this.setState({
       formValues: {},
     });
     dispatch({
-      type: 'sysAnddict/fetch',
+      type: 'sysUser/fetch',
       payload: {},
     });
   };
@@ -179,7 +212,7 @@ class TableList extends Component<TableListProps, TableListState> {
     switch (e.key) {
       case 'remove':
         dispatch({
-          type: 'sysAnddict/remove',
+          type: 'sysUser/remove',
           payload: {
             key: selectedRows.map(row => row.key),
           },
@@ -219,8 +252,23 @@ class TableList extends Component<TableListProps, TableListState> {
       });
 
       dispatch({
-        type: 'sysAnddict/fetch',
-        payload: values,
+        type: 'sysUser/setCurrent',
+        payload: 1,
+      });
+
+      const query: TablePageQuery = {
+        page: {
+          size: 10,
+          current: 1,
+        },
+        fields: {
+          ...fieldsValue,
+        },
+      };
+
+      dispatch({
+        type: 'sysUser/fetch',
+        payload: query,
       });
     });
   };
@@ -241,12 +289,11 @@ class TableList extends Component<TableListProps, TableListState> {
   handleAdd = (fields: { desc: any }) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'sysAnddict/add',
+      type: 'sysUser/add',
       payload: {
-        desc: fields.desc,
+        ...fields,
       },
     });
-
     message.success('添加成功');
     this.handleModalVisible();
   };
@@ -254,7 +301,7 @@ class TableList extends Component<TableListProps, TableListState> {
   handleUpdate = (fields: FormValueType) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'sysAnddict/update',
+      type: 'sysUser/update',
       payload: {
         name: fields.name,
         desc: fields.desc,
@@ -266,11 +313,6 @@ class TableList extends Component<TableListProps, TableListState> {
     this.handleUpdateModalVisible();
   };
 
-  handleRemoveItems(items: TableListItem[]) {
-    console.log(items);
-  };
-
-
   renderSimpleForm() {
     const { form } = this.props;
     const { getFieldDecorator } = form;
@@ -278,18 +320,8 @@ class TableList extends Component<TableListProps, TableListState> {
       <Form onSubmit={this.handleSearch} layout="inline">
         <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
           <Col md={8} sm={24}>
-            <FormItem label="规则名称">
-              {getFieldDecorator('name')(<Input placeholder="请输入" />)}
-            </FormItem>
-          </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="使用状态">
-              {getFieldDecorator('status')(
-                <Select placeholder="请选择" style={{ width: '100%' }}>
-                  <Option value="0">关闭</Option>
-                  <Option value="1">运行中</Option>
-                </Select>,
-              )}
+            <FormItem label="用户名">
+              {getFieldDecorator('username')(<Input placeholder="请输入" />)}
             </FormItem>
           </Col>
           <Col md={8} sm={24}>
@@ -391,11 +423,17 @@ class TableList extends Component<TableListProps, TableListState> {
 
   render() {
     const {
-      sysAnddict: { data },
+      sysUser: { data },
       loading,
     } = this.props;
 
     const { selectedRows, modalVisible, updateModalVisible, stepFormValues } = this.state;
+    const menu = (
+      <Menu onClick={this.handleMenuClick} selectedKeys={[]}>
+        <Menu.Item key="remove">删除</Menu.Item>
+        <Menu.Item key="approval">批量审批</Menu.Item>
+      </Menu>
+    );
 
     const parentMethods = {
       handleAdd: this.handleAdd,
@@ -414,9 +452,16 @@ class TableList extends Component<TableListProps, TableListState> {
               <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
                 新建
               </Button>
-              <Button disabled={ selectedRows.length === 0 } onClick={() => this.handleRemoveItems(selectedRows)}>
-                删除
-              </Button>
+              {selectedRows.length > 0 && (
+                <span>
+                  <Button>批量操作</Button>
+                  <Dropdown overlay={menu}>
+                    <Button>
+                      更多操作 <Icon type="down" />
+                    </Button>
+                  </Dropdown>
+                </span>
+              )}
             </div>
             <StandardTable
               selectedRows={selectedRows}
