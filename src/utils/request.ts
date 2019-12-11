@@ -56,3 +56,5 @@ const requestFunction = extend({
 const request = (url: string, params?: any) => requestFunction(`${prefix}${url}`, params);
 
 export default request;
+
+export const getContextUrl = (url: string) => `${prefix}${url}`;

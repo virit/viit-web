@@ -38,21 +38,17 @@ const getValue = (obj: { [x: string]: string[] }) =>
     .map(key => obj[key])
     .join(',');
 
-type IStatusMapType = 'default' | 'processing' | 'success' | 'error';
-const statusMap = ['default', 'processing', 'success', 'error'];
-const status = ['关闭', '运行中', '已上线', '异常'];
-
 interface TableListProps extends FormComponentProps {
   dispatch: Dispatch<
     Action<
-      | 'sysAndroleType/add'
-      | 'sysAndroleType/fetch'
-      | 'sysAndroleType/remove'
-      | 'sysAndroleType/update'
+      | 'sysRoleType/add'
+      | 'sysRoleType/fetch'
+      | 'sysRoleType/remove'
+      | 'sysRoleType/update'
     >
   >;
   loading: boolean;
-  sysAndroleType: StateType;
+  sysRoleType: StateType;
 }
 
 interface TableListState {
@@ -67,18 +63,18 @@ interface TableListState {
 /* eslint react/no-multi-comp:0 */
 @connect(
   ({
-    sysAndroleType,
+    sysRoleType,
     loading,
   }: {
-    sysAndroleType: StateType;
+    sysRoleType: StateType;
     loading: {
       models: {
         [key: string]: boolean;
       };
     };
   }) => ({
-    sysAndroleType,
-    loading: loading.models.sysAndroleType,
+    sysRoleType,
+    loading: loading.models.sysRoleType,
   }),
 )
 class TableList extends Component<TableListProps, TableListState> {
@@ -93,52 +89,8 @@ class TableList extends Component<TableListProps, TableListState> {
 
   columns: StandardTableColumnProps[] = [
     {
-      title: '规则名称',
-      dataIndex: 'name',
-    },
-    {
-      title: '描述',
-      dataIndex: 'desc',
-    },
-    {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      align: 'right',
-      render: (val: string) => `${val} 万`,
-      // mark to display a total number
-      needTotal: true,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      filters: [
-        {
-          text: status[0],
-          value: '0',
-        },
-        {
-          text: status[1],
-          value: '1',
-        },
-        {
-          text: status[2],
-          value: '2',
-        },
-        {
-          text: status[3],
-          value: '3',
-        },
-      ],
-      render(val: IStatusMapType) {
-        return <Badge status={statusMap[val]} text={status[val]} />;
-      },
-    },
-    {
-      title: '上次调度时间',
-      dataIndex: 'updatedAt',
-      sorter: true,
-      render: (val: string) => <span>{moment(val).format('YYYY-MM-DD HH:mm:ss')}</span>,
+      title: '类型名称',
+      dataIndex: 'typeName',
     },
     {
       title: '操作',
@@ -153,9 +105,15 @@ class TableList extends Component<TableListProps, TableListState> {
   ];
 
   componentDidMount() {
-    const { dispatch } = this.props;
+    const { dispatch, sysRoleType: { data } } = this.props;
     dispatch({
-      type: 'sysAndroleType/fetch',
+      type: 'sysRoleType/fetch',
+      payload: {
+        page: {
+          current: data.pagination.current,
+          pageSize: data.pagination.pageSize,
+        }
+      }
     });
   }
 
@@ -184,7 +142,7 @@ class TableList extends Component<TableListProps, TableListState> {
     }
 
     dispatch({
-      type: 'sysAndroleType/fetch',
+      type: 'sysRoleType/fetch',
       payload: params,
     });
   };
@@ -196,7 +154,7 @@ class TableList extends Component<TableListProps, TableListState> {
       formValues: {},
     });
     dispatch({
-      type: 'sysAndroleType/fetch',
+      type: 'sysRoleType/fetch',
       payload: {},
     });
   };
@@ -216,7 +174,7 @@ class TableList extends Component<TableListProps, TableListState> {
     switch (e.key) {
       case 'remove':
         dispatch({
-          type: 'sysAndroleType/remove',
+          type: 'sysRoleType/remove',
           payload: {
             key: selectedRows.map(row => row.key),
           },
@@ -256,7 +214,7 @@ class TableList extends Component<TableListProps, TableListState> {
       });
 
       dispatch({
-        type: 'sysAndroleType/fetch',
+        type: 'sysRoleType/fetch',
         payload: values,
       });
     });
@@ -278,7 +236,7 @@ class TableList extends Component<TableListProps, TableListState> {
   handleAdd = (fields: { desc: any }) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'sysAndroleType/add',
+      type: 'sysRoleType/add',
       payload: {
         desc: fields.desc,
       },
@@ -291,7 +249,7 @@ class TableList extends Component<TableListProps, TableListState> {
   handleUpdate = (fields: FormValueType) => {
     const { dispatch } = this.props;
     dispatch({
-      type: 'sysAndroleType/update',
+      type: 'sysRoleType/update',
       payload: {
         name: fields.name,
         desc: fields.desc,
@@ -423,7 +381,7 @@ class TableList extends Component<TableListProps, TableListState> {
 
   render() {
     const {
-      sysAndroleType: { data },
+      sysRoleType: { data },
       loading,
     } = this.props;
 

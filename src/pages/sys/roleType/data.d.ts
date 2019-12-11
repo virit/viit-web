@@ -1,3 +1,5 @@
+import {PageQuery} from "@/utils/pages";
+
 export interface TableListItem {
   key: number;
   disabled?: boolean;
@@ -31,4 +33,10 @@ export interface TableListParams {
   name: string;
   pageSize: number;
   currentPage: number;
+}
+
+export interface TablePageQuery extends PageQuery {
+  fields: {
+
+  }
 }

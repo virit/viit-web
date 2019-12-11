@@ -1,9 +1,12 @@
 import request from '@/utils/request';
-import { TableListParams } from './data.d';
+import {TableListParams, TablePageQuery} from './data.d';
+import {toQueryParams} from "@/utils/pages";
 
-export async function queryRule(params: TableListParams) {
-  return request('/api/rule', {
-    params,
+const resourceName = "/sys/role-type";
+
+export async function queryDictType(params: TablePageQuery) {
+  return request(resourceName, {
+    params: toQueryParams(params),
   });
 }
 

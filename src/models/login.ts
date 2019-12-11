@@ -3,7 +3,7 @@ import {routerRedux} from 'dva/router';
 import {Effect} from 'dva';
 import {stringify} from 'querystring';
 
-import {fakeAccountLogin, getFakeCaptcha} from '@/services/login';
+import {fakeAccountLogin, getFakeCaptcha, logOut} from '@/services/login';
 import {setAuthority} from '@/utils/authority';
 import {getPageQuery} from '@/utils/utils';
 import StatusCode from "@/utils/StatusCode";
@@ -66,8 +66,10 @@ const Model: LoginModelType = {
     *getCaptcha({ payload }, { call }) {
       yield call(getFakeCaptcha, payload);
     },
-    *logout(_, { put }) {
+    *logout(_, { put, call }) {
       const { redirect } = getPageQuery();
+
+      yield call(logOut);
       // redirect
       if (window.location.pathname !== '/user/login' && !redirect) {
         yield put(

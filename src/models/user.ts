@@ -5,7 +5,7 @@ import { queryCurrent, query as queryUsers } from '@/services/user';
 
 export interface CurrentUser {
   avatar?: string;
-  name?: string;
+  username?: string;
   title?: string;
   group?: string;
   signature?: string;
@@ -19,6 +19,7 @@ export interface CurrentUser {
 
 export interface UserModelState {
   currentUser?: CurrentUser;
+  menu?: boolean;
 }
 
 export interface UserModelType {
@@ -38,7 +39,9 @@ const UserModel: UserModelType = {
   namespace: 'user',
 
   state: {
-    currentUser: {},
+    currentUser: {
+    },
+    menu: true
   },
 
   effects: {

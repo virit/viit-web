@@ -29,13 +29,13 @@ const CreateForm: React.FC<CreateFormProps> = props => {
     >
       <FormItem labelCol={{ span: 5 }} wrapperCol={{ span: 15 }} label="用户名">
         {form.getFieldDecorator('username', {
-          rules: [{ required: true, message: '请输入至少五个字符的规则描述！', min: 5 }],
-        })(<Input placeholder="请输入" />)}
+          rules: [{ required: true, message: '用户名为4到16位字符！', min: 4, max: 5 }],
+        })(<Input placeholder="请输入" autoComplete="off"/>)}
       </FormItem>
       <FormItem labelCol={{ span: 5 }} wrapperCol={{ span: 15 }} label="密码">
-        {form.getFieldDecorator('paassword', {
-          rules: [{ required: true, message: '请输入至少五个字符的规则描述！', min: 5 }],
-        })(<Input type="password" placeholder="请输入" />)}
+        {form.getFieldDecorator('password', {
+          rules: [{ required: true, message: '密码长度为6到16位！', min: 6, max: 16 }],
+        })(<Input type="text" placeholder="请输入" autoComplete="off" />)}
       </FormItem>
     </Modal>
   );

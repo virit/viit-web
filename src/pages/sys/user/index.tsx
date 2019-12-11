@@ -10,7 +10,7 @@ import {
   Input,
   InputNumber,
   Menu,
-  message,
+  message, Modal,
   Popconfirm,
   Row,
   Select,
@@ -32,6 +32,7 @@ import styles from './style.less';
 
 const FormItem = Form.Item;
 const { Option } = Select;
+const { confirm } = Modal;
 // const getValue = (obj: { [x: string]: string[] }) =>
 //   Object.keys(obj)
 //     .map(key => obj[key])
@@ -98,7 +99,6 @@ class TableList extends Component<TableListProps, TableListState> {
     {
       title: '创建时间',
       dataIndex: 'createDate',
-      sorter: true,
     },
     {
       title: '更新时间',
@@ -141,10 +141,29 @@ class TableList extends Component<TableListProps, TableListState> {
   }
 
   handleRemove(id: string) {
-    const { dispatch } = this.props;
+    const { dispatch, sysUser } = this.props;
+    const { formValues } = this.state;
+    const { data:{ pagination } } = sysUser;
+
     dispatch({
       type: 'sysUser/remove',
       payload: id,
+      callback() {
+
+        const params: Partial<TablePageQuery> = {
+          page: {
+            current: pagination.current,
+            size: pagination.pageSize,
+          },
+          fields: {
+            ...formValues,
+          },
+        };
+        dispatch({
+          type: 'sysUser/fetch',
+          payload: params,
+        });
+      }
     });
   }
 
@@ -211,14 +230,21 @@ class TableList extends Component<TableListProps, TableListState> {
     if (!selectedRows) return;
     switch (e.key) {
       case 'remove':
-        dispatch({
-          type: 'sysUser/remove',
-          payload: {
-            key: selectedRows.map(row => row.key),
-          },
-          callback: () => {
-            this.setState({
-              selectedRows: [],
+        const handleFormReset = this.handleFormReset;
+        const resetRows = () => this.setState({ selectedRows: []});
+        confirm({
+          title: '确定删除这些用户吗?',
+          content: '操作后无法撤销',
+          okText: "确定",
+          cancelText: "取消",
+          onOk() {
+            dispatch({
+              type: 'sysUser/remove',
+              payload: selectedRows.map(row => row.key).join(','),
+              callback: () => {
+                resetRows();
+                handleFormReset();
+              },
             });
           },
         });
@@ -332,9 +358,9 @@ class TableList extends Component<TableListProps, TableListState> {
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
-              <a style={{ marginLeft: 8 }} onClick={this.toggleForm}>
-                展开 <Icon type="down" />
-              </a>
+              {/*<a style={{ marginLeft: 8 }} onClick={this.toggleForm}>*/}
+              {/*  展开 <Icon type="down" />*/}
+              {/*</a>*/}
             </span>
           </Col>
         </Row>

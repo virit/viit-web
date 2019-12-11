@@ -4,7 +4,7 @@ import { toQueryParams } from '@/utils/pages';
 
 const resourceName = '/sys/user';
 
-export async function queryRule(params: TablePageQuery) {
+export async function queryUser(params: TablePageQuery) {
   return request(resourceName, {
     params: toQueryParams(params),
   });

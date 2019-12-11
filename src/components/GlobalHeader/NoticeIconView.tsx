@@ -19,13 +19,13 @@ export interface GlobalHeaderRightProps extends ConnectProps {
 
 class GlobalHeaderRight extends Component<GlobalHeaderRightProps> {
   componentDidMount() {
-    const { dispatch } = this.props;
+    /**const { dispatch } = this.props;
 
     if (dispatch) {
       dispatch({
         type: 'global/fetchNotices',
       });
-    }
+    }**/
   }
 
   changeReadState = (clickedItem: NoticeItem): void => {

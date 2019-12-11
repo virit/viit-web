@@ -1,6 +1,6 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addUser, queryRule, removeUser, updateRule } from './service';
+import { addUser, queryUser, removeUser, updateRule } from './service';
 
 import { TableListData, TablePageQuery } from './data.d';
 
@@ -41,7 +41,7 @@ const Model: ModelType = {
 
   effects: {
     *fetch({ payload }, { call, put }) {
-      const response = yield call(queryRule, payload);
+      const response = yield call(queryUser, payload);
       yield put({
         type: 'save',
         payload: {
@@ -58,7 +58,7 @@ const Model: ModelType = {
       });
     },
     *add({ payload, callback }, { call, put }) {
-      const response = yield call(addUser, payload);
+      yield call(addUser, payload);
       const query: TablePageQuery = {
         page: {
           size: 10,
@@ -73,7 +73,7 @@ const Model: ModelType = {
       if (callback) callback();
     },
     *remove({ payload, callback }, { call, put }) {
-      const response = yield call(removeUser, payload);
+      yield call(removeUser, payload);
       if (callback) callback();
     },
     *update({ payload, callback }, { call, put }) {
