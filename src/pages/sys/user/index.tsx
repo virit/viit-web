@@ -13,7 +13,7 @@ import {
   message, Modal,
   Popconfirm,
   Row,
-  Select,
+  Select, Tag,
 } from 'antd';
 import React, { Component, Fragment } from 'react';
 
@@ -25,10 +25,12 @@ import { connect } from 'dva';
 import { StateType } from './model';
 import CreateForm from './components/CreateForm';
 import StandardTable, { StandardTableColumnProps } from './components/StandardTable';
-import UpdateForm, { FormValueType } from './components/UpdateForm';
-import { TableListItem, TableListPagination, TablePageQuery } from './data.d';
+import UpdateForm from './components/UpdateForm';
+import {SysUser, TableListPagination, TablePageQuery} from './data.d';
 
 import styles from './style.less';
+import {queryUserDetails} from "@/pages/sys/user/service";
+import AuthorityChecker from "@/components/Authorized/AuthorityChecker";
 
 const FormItem = Form.Item;
 const { Option } = Select;
@@ -47,6 +49,7 @@ interface TableListProps extends FormComponentProps {
       | 'sysUser/update'
       | 'sysUser/setPageSize'
       | 'sysUser/setCurrent'
+      | 'sysUser/fetchRoles'
     >
   >;
   loading: boolean;
@@ -57,11 +60,14 @@ interface TableListState {
   modalVisible: boolean;
   updateModalVisible: boolean;
   expandForm: boolean;
-  selectedRows: TableListItem[];
+  selectedRows: SysUser[];
   formValues: { [key: string]: string };
-  stepFormValues: Partial<TableListItem>;
+  stepFormValues: Partial<SysUser>;
   current: number;
 }
+
+type IStatusMap = 0 | 1;
+const status = ['禁用', '启用', ];
 
 /* eslint react/no-multi-comp:0 */
 @connect(
@@ -105,10 +111,17 @@ class TableList extends Component<TableListProps, TableListState> {
       dataIndex: 'updateDate',
     },
     {
+      title: '状态',
+      dataIndex: 'status',
+      render(val: IStatusMap) {
+        return <Tag color={val === 1 ? 'green' : 'red'}>{status[val]}</Tag>;
+      },
+    },
+    {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleUpdateModalVisible(true, record)}>修改</a>
+          <a onClick={() => this.showUpdateModal(true, record)}>修改</a>
           <Divider type="vertical" />
           <Popconfirm
             title="确定删除此用户吗?"
@@ -120,10 +133,24 @@ class TableList extends Component<TableListProps, TableListState> {
           >
             <a href="">删除</a>
           </Popconfirm>
+          <Divider type="vertical" />
+          <a onClick={() => this.setUserStatus(record)}>{ record.status === 1 ? '禁用' :  '启用' }</a>
         </Fragment>
       ),
     },
   ];
+
+  setUserStatus(record: SysUser) {
+    const { dispatch } = this.props;
+    dispatch({
+      type: 'sysUser/update',
+      payload: {
+        id: record.id,
+        status: record.status === 0 ? 1 : 0,
+      },
+      callback: () => this.reload(),
+    });
+  }
 
   componentDidMount() {
     const { dispatch } = this.props;
@@ -137,6 +164,9 @@ class TableList extends Component<TableListProps, TableListState> {
     dispatch({
       type: 'sysUser/fetch',
       payload: query,
+    });
+    dispatch({
+      type: 'sysUser/fetchRoles',
     });
   }
 
@@ -169,8 +199,8 @@ class TableList extends Component<TableListProps, TableListState> {
 
   handleStandardTableChange = (
     pagination: Partial<TableListPagination>,
-    filtersArg: Record<keyof TableListItem, string[]>,
-    sorter: SorterResult<TableListItem>,
+    filtersArg: Record<keyof SysUser, string[]>,
+    sorter: SorterResult<SysUser>,
   ) => {
     const { dispatch } = this.props;
     const { formValues } = this.state;
@@ -216,6 +246,23 @@ class TableList extends Component<TableListProps, TableListState> {
     });
   };
 
+  reload = () => {
+    const { dispatch, sysUser } = this.props;
+    const { formValues } = this.state;
+    const { pagination } = sysUser.data;
+    dispatch({
+      type: 'sysUser/fetch',
+      payload: {
+        fields: {
+          ...formValues
+        },
+        page: {
+          ...pagination
+        }
+      },
+    });
+  };
+
   toggleForm = () => {
     const { expandForm } = this.state;
     this.setState({
@@ -254,7 +301,7 @@ class TableList extends Component<TableListProps, TableListState> {
     }
   };
 
-  handleSelectRows = (rows: TableListItem[]) => {
+  handleSelectRows = (rows: SysUser[]) => {
     this.setState({
       selectedRows: rows,
     });
@@ -305,10 +352,18 @@ class TableList extends Component<TableListProps, TableListState> {
     });
   };
 
-  handleUpdateModalVisible = (flag?: boolean, record?: FormValueType) => {
+  showUpdateModal = (flag: boolean, record: SysUser) => {
+    queryUserDetails(record.id).then((resp) => {
+      this.handleUpdateModalVisible(flag);
+      this.setState({
+        stepFormValues: resp.data,
+      });
+    });
+  };
+
+  handleUpdateModalVisible = (flag?: boolean) => {
     this.setState({
       updateModalVisible: !!flag,
-      stepFormValues: record || {},
     });
   };
 
@@ -324,20 +379,20 @@ class TableList extends Component<TableListProps, TableListState> {
     this.handleModalVisible();
   };
 
-  handleUpdate = (fields: FormValueType) => {
+  handleUpdate = (fields: SysUser) => {
     const { dispatch } = this.props;
     dispatch({
       type: 'sysUser/update',
       payload: {
-        name: fields.name,
-        desc: fields.desc,
-        key: fields.key,
+        ...fields,
       },
+      callback: () => this.reload(),
     });
-
     message.success('配置成功');
     this.handleUpdateModalVisible();
   };
+
+
 
   renderSimpleForm() {
     const { form } = this.props;
@@ -400,6 +455,7 @@ class TableList extends Component<TableListProps, TableListState> {
           <Col md={8} sm={24}>
             <FormItem label="更新日期">
               {getFieldDecorator('date')(
+                // @ts-ignore
                 <DatePicker style={{ width: '100%' }} placeholder="请输入更新日期" />,
               )}
             </FormItem>
@@ -449,7 +505,7 @@ class TableList extends Component<TableListProps, TableListState> {
 
   render() {
     const {
-      sysUser: { data },
+      sysUser: { data, data: { roles } },
       loading,
     } = this.props;
 
@@ -475,9 +531,11 @@ class TableList extends Component<TableListProps, TableListState> {
           <div className={styles.tableList}>
             <div className={styles.tableListForm}>{this.renderForm()}</div>
             <div className={styles.tableListOperator}>
-              <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
-                新建
-              </Button>
+              <AuthorityChecker withAuthority="ROLE_super">
+                <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
+                  新建
+                </Button>
+              </AuthorityChecker>
               {selectedRows.length > 0 && (
                 <span>
                   <Button>批量操作</Button>
@@ -499,14 +557,8 @@ class TableList extends Component<TableListProps, TableListState> {
             />
           </div>
         </Card>
-        <CreateForm {...parentMethods} modalVisible={modalVisible} />
-        {stepFormValues && Object.keys(stepFormValues).length ? (
-          <UpdateForm
-            {...updateMethods}
-            updateModalVisible={updateModalVisible}
-            values={stepFormValues}
-          />
-        ) : null}
+        <CreateForm {...parentMethods} modalVisible={modalVisible} roles={roles} />
+        <UpdateForm  {...updateMethods} modalVisible={updateModalVisible} roles={roles} user={stepFormValues} />
       </PageHeaderWrapper>
     );
   }

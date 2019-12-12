@@ -1,6 +1,6 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addRule, queryRule, removeRule, updateRule } from './service';
+import { addRule, queryRoles, removeRule, updateRule } from './service';
 
 import { TableListData } from './data.d';
 
@@ -39,7 +39,7 @@ const Model: ModelType = {
 
   effects: {
     *fetch({ payload }, { call, put }) {
-      const response = yield call(queryRule, payload);
+      const response = yield call(queryRoles, payload);
       yield put({
         type: 'save',
         payload: response,

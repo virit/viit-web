@@ -32,3 +32,13 @@ export interface TableListParams {
   pageSize: number;
   currentPage: number;
 }
+
+export interface Role {
+  id: string;
+  name: string;
+  code: string;
+  typeId: string;
+  description: string;
+  createDate: string;
+  updateDate: string;
+}

@@ -1,7 +1,9 @@
 import { PageQuery } from '@/utils/pages';
+import {Role} from "@/pages/sys/role/data";
 
-export interface TableListItem {
+export interface SysUser {
   id: string;
+  username: string;
   key: number;
   disabled?: boolean;
   href: string;
@@ -15,6 +17,7 @@ export interface TableListItem {
   updatedAt: Date;
   createdAt: Date;
   progress: number;
+  roleIdList: string[];
 }
 
 export interface TableListPagination {
@@ -24,8 +27,9 @@ export interface TableListPagination {
 }
 
 export interface TableListData {
-  list: TableListItem[];
+  list: SysUser[];
   pagination: Partial<TableListPagination>;
+  roles: Role[];
 }
 
 export interface TableListParams {

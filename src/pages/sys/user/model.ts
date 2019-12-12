@@ -1,8 +1,9 @@
 import { AnyAction, Reducer } from 'redux';
 import { EffectsCommandMap } from 'dva';
-import { addUser, queryUser, removeUser, updateRule } from './service';
+import { addUser, queryUser, removeUser, updateUser } from './service';
 
 import { TableListData, TablePageQuery } from './data.d';
+import {queryRoles} from "@/pages/sys/role/service";
 
 export interface StateType {
   data: TableListData;
@@ -18,6 +19,7 @@ export interface ModelType {
   state: StateType;
   effects: {
     fetch: Effect;
+    fetchRoles: Effect;
     add: Effect;
     remove: Effect;
     update: Effect;
@@ -26,6 +28,7 @@ export interface ModelType {
     save: Reducer<StateType>;
     setPageSize: Reducer<StateType>;
     setCurrent: Reducer<StateType>;
+    setRoles: Reducer<StateType>;
   };
 }
 
@@ -36,6 +39,7 @@ const Model: ModelType = {
     data: {
       list: [],
       pagination: {},
+      roles: [],
     },
   },
 
@@ -55,6 +59,13 @@ const Model: ModelType = {
             },
           },
         },
+      });
+    },
+    *fetchRoles({ payload }, {call, put }) {
+      const response = yield call(queryRoles);
+      yield put({
+        type: 'setRoles',
+        payload: response.data.records,
       });
     },
     *add({ payload, callback }, { call, put }) {
@@ -77,11 +88,7 @@ const Model: ModelType = {
       if (callback) callback();
     },
     *update({ payload, callback }, { call, put }) {
-      const response = yield call(updateRule, payload);
-      yield put({
-        type: 'save',
-        payload: response,
-      });
+      const response = yield call(updateUser, payload);
       if (callback) callback();
     },
   },
@@ -90,7 +97,11 @@ const Model: ModelType = {
     save(state, action) {
       return {
         ...state,
-        data: action.payload.data,
+        data: {
+          // @ts-ignore
+          ...state.data,
+          ...action.payload.data,
+        },
       };
     },
     setPageSize(state: any, action) {
@@ -103,6 +114,12 @@ const Model: ModelType = {
       newState.data.pagination.current = action.payload;
       return newState;
     },
+    setRoles(state: any, action) {
+      const newState: any = {...state};
+      const { data } = newState;
+      data.roles = action.payload;
+      return newState;
+    }
   },
 };
 

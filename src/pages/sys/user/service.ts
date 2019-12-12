@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { TableListParams, TablePageQuery } from './data.d';
+import {SysUser, TableListParams, TablePageQuery} from './data.d';
 import { toQueryParams } from '@/utils/pages';
 
 const resourceName = '/sys/user';
@@ -8,6 +8,10 @@ export async function queryUser(params: TablePageQuery) {
   return request(resourceName, {
     params: toQueryParams(params),
   });
+}
+
+export async function queryUserDetails(id: string) {
+  return request(`${resourceName}/${id}`);
 }
 
 export async function removeUser(params: TableListParams) {
@@ -25,12 +29,11 @@ export async function addUser(params: TableListParams) {
   });
 }
 
-export async function updateRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
+export async function updateUser(params: SysUser) {
+  return request(resourceName + '/' + params.id, {
+    method: 'PUT',
     data: {
       ...params,
-      method: 'update',
     },
   });
 }

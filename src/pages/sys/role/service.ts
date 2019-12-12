@@ -1,8 +1,10 @@
 import request from '@/utils/request';
 import { TableListParams } from './data.d';
 
-export async function queryRule(params: TableListParams) {
-  return request('/api/rule', {
+const resourceName = '/sys/role';
+
+export async function queryRoles(params: TableListParams) {
+  return request(resourceName, {
     params,
   });
 }

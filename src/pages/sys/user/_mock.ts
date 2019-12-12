@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { parse } from 'url';
-import { TableListItem, TableListParams } from './data.d';
+import { SysUser, TableListParams } from './data.d';
 
 // mock tableListDataSource
-let tableListDataSource: TableListItem[] = [];
+let tableListDataSource: SysUser[] = [];
 
 for (let i = 0; i < 8; i += 1) {
   tableListDataSource.push({
@@ -49,7 +49,7 @@ function getRule(req: Request, res: Response, u: string) {
 
   if (params.status) {
     const status = params.status.split(',');
-    let filterDataSource: TableListItem[] = [];
+    let filterDataSource: SysUser[] = [];
     status.forEach((s: string) => {
       filterDataSource = filterDataSource.concat(
         dataSource.filter(item => {

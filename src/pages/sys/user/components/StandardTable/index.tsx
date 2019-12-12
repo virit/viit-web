@@ -2,7 +2,7 @@ import { Alert, Table } from 'antd';
 import { ColumnProps, TableRowSelection, TableProps } from 'antd/es/table';
 import React, { Component, Fragment } from 'react';
 
-import { TableListItem } from '../../data.d';
+import {SysUser, SysUser} from '../../data.d';
 import styles from './index.less';
 
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -10,14 +10,14 @@ type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export interface StandardTableProps<T> extends Omit<TableProps<T>, 'columns'> {
   columns: StandardTableColumnProps[];
   data: {
-    list: TableListItem[];
-    pagination: StandardTableProps<TableListItem>['pagination'];
+    list: SysUser[];
+    pagination: StandardTableProps<SysUser>['pagination'];
   };
-  selectedRows: TableListItem[];
+  selectedRows: SysUser[];
   onSelectRow: (rows: any) => void;
 }
 
-export interface StandardTableColumnProps extends ColumnProps<TableListItem> {
+export interface StandardTableColumnProps extends ColumnProps<SysUser> {
   needTotal?: boolean;
   total?: number;
 }
@@ -40,8 +40,8 @@ interface StandardTableState {
   needTotalList: StandardTableColumnProps[];
 }
 
-class StandardTable extends Component<StandardTableProps<TableListItem>, StandardTableState> {
-  static getDerivedStateFromProps(nextProps: StandardTableProps<TableListItem>) {
+class StandardTable extends Component<StandardTableProps<SysUser>, StandardTableState> {
+  static getDerivedStateFromProps(nextProps: StandardTableProps<SysUser>) {
     // clean state
     if (nextProps.selectedRows.length === 0) {
       const needTotalList = initTotalList(nextProps.columns);
@@ -53,7 +53,7 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
     return null;
   }
 
-  constructor(props: StandardTableProps<TableListItem>) {
+  constructor(props: StandardTableProps<SysUser>) {
     super(props);
     const { columns } = props;
     const needTotalList = initTotalList(columns);
@@ -64,9 +64,9 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
     };
   }
 
-  handleRowSelectChange: TableRowSelection<TableListItem>['onChange'] = (
+  handleRowSelectChange: TableRowSelection<SysUser>['onChange'] = (
     selectedRowKeys,
-    selectedRows: TableListItem[],
+    selectedRows: SysUser[],
   ) => {
     const currySelectedRowKeys = selectedRowKeys as string[];
     let { needTotalList } = this.state;
@@ -82,7 +82,7 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
     this.setState({ selectedRowKeys: currySelectedRowKeys, needTotalList });
   };
 
-  handleTableChange: TableProps<TableListItem>['onChange'] = (
+  handleTableChange: TableProps<SysUser>['onChange'] = (
     pagination,
     filters,
     sorter,
@@ -113,10 +113,10 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
         }
       : false;
 
-    const rowSelection: TableRowSelection<TableListItem> = {
+    const rowSelection: TableRowSelection<SysUser> = {
       selectedRowKeys,
       onChange: this.handleRowSelectChange,
-      getCheckboxProps: (record: TableListItem) => ({
+      getCheckboxProps: (record: SysUser) => ({
         disabled: record.disabled,
       }),
     };
@@ -134,7 +134,7 @@ class StandardTable extends Component<StandardTableProps<TableListItem>, Standar
                     总计&nbsp;
                     <span style={{ fontWeight: 600 }}>
                       {item.render
-                        ? item.render(item.total, item as TableListItem, index)
+                        ? item.render(item.total, item as SysUser, index)
                         : item.total}
                     </span>
                   </span>
