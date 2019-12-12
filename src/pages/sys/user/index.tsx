@@ -52,6 +52,7 @@ interface TableListProps extends FormComponentProps {
       | 'sysUser/setPageSize'
       | 'sysUser/setCurrent'
       | 'sysUser/fetchRoles'
+      | 'sysUser/setPagination'
     >
   >;
   loading: boolean;
@@ -211,6 +212,10 @@ class TableList extends Component<TableListProps, TableListState> {
     const { dispatch } = this.props;
     const { formValues } = this.state;
 
+    this.setState({
+      selectedRows: []
+    });
+
     // const filters = Object.keys(filtersArg).reduce((obj, key) => {
     //   const newObj = { ...obj };
     //   newObj[key] = getValue(filtersArg[key]);
@@ -226,6 +231,13 @@ class TableList extends Component<TableListProps, TableListState> {
         ...formValues,
       },
     };
+    dispatch({
+      type: 'sysUser/setPagination',
+      payload: {
+        current: pagination.current,
+        size: pagination.pageSize,
+      }
+    });
     if (sorter.field) {
       // params.sorter = `${sorter.field}_${sorter.order}`;
     }
@@ -238,6 +250,9 @@ class TableList extends Component<TableListProps, TableListState> {
 
   handleFormReset = () => {
     const { form, dispatch } = this.props;
+    this.setState({
+      selectedRows: []
+    });
     form.resetFields();
     dispatch({
       type: 'sysUser/setCurrent',
@@ -256,6 +271,7 @@ class TableList extends Component<TableListProps, TableListState> {
     const { dispatch, sysUser } = this.props;
     const { formValues } = this.state;
     const { pagination } = sysUser.data;
+    console.log(sysUser);
     dispatch({
       type: 'sysUser/fetch',
       payload: {
@@ -315,6 +331,9 @@ class TableList extends Component<TableListProps, TableListState> {
     form.validateFields((err, fieldsValue) => {
       if (err) return;
 
+      this.setState({
+        selectedRows: []
+      });
       const values = {
         ...fieldsValue,
         updatedAt: fieldsValue.updatedAt && fieldsValue.updatedAt.valueOf(),
@@ -354,6 +373,8 @@ class TableList extends Component<TableListProps, TableListState> {
 
   showUpdateModal = (flag: boolean, record: SysUser) => {
 
+    const { dispatch, sysUser } = this.props;
+    console.log(sysUser);
     this.setState({updateModalLoading: true});
     this.handleUpdateModalVisible(flag);
 
@@ -387,7 +408,7 @@ class TableList extends Component<TableListProps, TableListState> {
           message.success('添加成功');
           this.handleModalVisible();
           form.resetFields();
-          this.reload();
+          this.handleFormReset();
         }
         this.setState({createModalLoading: false});
       }
@@ -395,7 +416,8 @@ class TableList extends Component<TableListProps, TableListState> {
   };
 
   handleUpdate = (fields: SysUser, form: WrappedFormUtils<any>) => {
-    const { dispatch } = this.props;
+    const { dispatch, sysUser } = this.props;
+    console.log(sysUser);
     this.setState({updateModalLoading: true});
     dispatch({
       type: 'sysUser/update',

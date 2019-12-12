@@ -29,6 +29,7 @@ export interface ModelType {
     setPageSize: Reducer<StateType>;
     setCurrent: Reducer<StateType>;
     setRoles: Reducer<StateType>;
+    setPagination: Reducer<StateType>;
   };
 }
 
@@ -38,7 +39,11 @@ const Model: ModelType = {
   state: {
     data: {
       list: [],
-      pagination: {},
+      pagination: {
+        current: 1,
+        pageSize: 10,
+        total: 0,
+      },
       roles: [],
     },
   },
@@ -84,19 +89,26 @@ const Model: ModelType = {
   },
 
   reducers: {
-    save(state, action) {
-      return {
-        ...state,
-        data: {
-          // @ts-ignore
-          ...state.data,
-          ...action.payload.data,
-        },
+    save(state: any, action) {
+      const newState: any = Object.assign(state);
+      newState.data.pagination = {
+        ...newState.data.pagination,
+        ...action.payload.data.pagination,
       };
+      newState.data.list = action.payload.data.list;
+      return newState;
     },
     setPageSize(state: any, action) {
       const newState: any = Object.assign(state);
       newState.data.pagination.pageSize = action.payload;
+      return newState;
+    },
+    setPagination(state: any, action) {
+      const newState: any = Object.assign(state);
+      newState.data.pagination = {
+        ...newState.data.pagination,
+        ...action.payload,
+      };
       return newState;
     },
     setCurrent(state: any, action) {
