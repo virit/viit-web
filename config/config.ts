@@ -96,18 +96,13 @@ export default {
           routes: [
             {
               path: '/',
-              redirect: '/dashboard',
+              redirect: '/sys/user',
             },
-            {
-              name: '分析页',
-              icon: 'smile',
-              path: '/dashboard',
-              component: './dashboard',
-            }, // {
-            //   path: '/welcome',
-            //   name: 'welcome',
+            // {
+            //   name: '分析页',
             //   icon: 'smile',
-            //   component: './Welcome',
+            //   path: '/dashboard',
+            //   component: './dashboard',
             // },
             {
               path: '/admin',
@@ -127,26 +122,26 @@ export default {
                   path: '/sys/user',
                   component: './sys/user',
                 },
-                {
-                  name: '角色类型',
-                  icon: 'smile',
-                  path: '/sys/roletype',
-                  component: './sys/roleType',
-                },
-                {
-                  name: '角色管理',
-                  icon: 'smile',
-                  path: '/sys/role',
-                  component: './sys/role',
-                },
+                // {
+                //   name: '角色类型',
+                //   icon: 'smile',
+                //   path: '/sys/roletype',
+                //   component: './sys/roleType',
+                // },
+                // {
+                //   name: '角色管理',
+                //   icon: 'smile',
+                //   path: '/sys/role',
+                //   component: './sys/role',
+                // },
               ],
             },
-            {
-              name: '个人设置',
-              icon: 'smile',
-              path: '/accountsettings',
-              component: './AccountSettings',
-            },
+            // {
+            //   name: '个人设置',
+            //   icon: 'smile',
+            //   path: '/accountsettings',
+            //   component: './AccountSettings',
+            // },
             {
               component: './404',
             },

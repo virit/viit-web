@@ -4,33 +4,35 @@ import {
   Col,
   DatePicker,
   Divider,
-  Dropdown,
   Form,
   Icon,
   Input,
   InputNumber,
-  Menu,
-  message, Modal,
+  message,
+  Modal,
   Popconfirm,
   Row,
-  Select, Tag,
+  Select,
+  Tag,
 } from 'antd';
-import React, { Component, Fragment } from 'react';
+import React, {Component, Fragment} from 'react';
 
-import { Action, Dispatch } from 'redux';
-import { FormComponentProps } from 'antd/es/form';
-import { PageHeaderWrapper } from '@ant-design/pro-layout';
-import { SorterResult } from 'antd/es/table';
-import { connect } from 'dva';
-import { StateType } from './model';
+import {Action, Dispatch} from 'redux';
+import {FormComponentProps} from 'antd/es/form';
+import {PageHeaderWrapper} from '@ant-design/pro-layout';
+import {SorterResult} from 'antd/es/table';
+import {connect} from 'dva';
+import {StateType} from './model';
 import CreateForm from './components/CreateForm';
-import StandardTable, { StandardTableColumnProps } from './components/StandardTable';
+import StandardTable, {StandardTableColumnProps} from './components/StandardTable';
 import UpdateForm from './components/UpdateForm';
 import {SysUser, TableListPagination, TablePageQuery} from './data.d';
 
 import styles from './style.less';
 import {queryUserDetails} from "@/pages/sys/user/service";
 import AuthorityChecker from "@/components/Authorized/AuthorityChecker";
+import {WrappedFormUtils} from "antd/lib/form/Form";
+import {SysUserResultCode} from "@/pages/sys/user/resultcode";
 
 const FormItem = Form.Item;
 const { Option } = Select;
@@ -58,7 +60,9 @@ interface TableListProps extends FormComponentProps {
 
 interface TableListState {
   modalVisible: boolean;
+  createModalLoading: boolean;
   updateModalVisible: boolean;
+  updateModalLoading: boolean;
   expandForm: boolean;
   selectedRows: SysUser[];
   formValues: { [key: string]: string };
@@ -89,7 +93,9 @@ const status = ['禁用', '启用', ];
 class TableList extends Component<TableListProps, TableListState> {
   state: TableListState = {
     modalVisible: false,
+    createModalLoading: false,
     updateModalVisible: false,
+    updateModalLoading: false,
     expandForm: false,
     selectedRows: [],
     formValues: {},
@@ -270,35 +276,29 @@ class TableList extends Component<TableListProps, TableListState> {
     });
   };
 
-  handleMenuClick = (e: { key: string }) => {
+  handleRemoveItem = () => {
     const { dispatch } = this.props;
     const { selectedRows } = this.state;
 
     if (!selectedRows) return;
-    switch (e.key) {
-      case 'remove':
-        const handleFormReset = this.handleFormReset;
-        const resetRows = () => this.setState({ selectedRows: []});
-        confirm({
-          title: '确定删除这些用户吗?',
-          content: '操作后无法撤销',
-          okText: "确定",
-          cancelText: "取消",
-          onOk() {
-            dispatch({
-              type: 'sysUser/remove',
-              payload: selectedRows.map(row => row.key).join(','),
-              callback: () => {
-                resetRows();
-                handleFormReset();
-              },
-            });
+    const handleFormReset = this.handleFormReset;
+    const resetRows = () => this.setState({ selectedRows: []});
+    confirm({
+      title: '确定删除这些用户吗?',
+      content: '操作后无法撤销',
+      okText: "确定",
+      cancelText: "取消",
+      onOk() {
+        dispatch({
+          type: 'sysUser/remove',
+          payload: selectedRows.map(row => row.key).join(','),
+          callback: () => {
+            resetRows();
+            handleFormReset();
           },
         });
-        break;
-      default:
-        break;
-    }
+      },
+    });
   };
 
   handleSelectRows = (rows: SysUser[]) => {
@@ -353,12 +353,17 @@ class TableList extends Component<TableListProps, TableListState> {
   };
 
   showUpdateModal = (flag: boolean, record: SysUser) => {
-    queryUserDetails(record.id).then((resp) => {
-      this.handleUpdateModalVisible(flag);
+
+    this.setState({updateModalLoading: true});
+    this.handleUpdateModalVisible(flag);
+
+    const loadCallback = (resp:any) => {
       this.setState({
         stepFormValues: resp.data,
       });
-    });
+      this.setState({updateModalLoading: false});
+    };
+    queryUserDetails(record.id).then(loadCallback);
   };
 
   handleUpdateModalVisible = (flag?: boolean) => {
@@ -367,32 +372,49 @@ class TableList extends Component<TableListProps, TableListState> {
     });
   };
 
-  handleAdd = (fields: { desc: any }) => {
+  handleAdd = (fields:any, form:WrappedFormUtils<any>) => {
     const { dispatch } = this.props;
+    this.setState({createModalLoading: true});
     dispatch({
       type: 'sysUser/add',
       payload: {
         ...fields,
       },
+      callback: ({ code }:any) => {
+        if (code === SysUserResultCode.USERNAME_EXISTENCE) {
+          message.error('用户名已存在，请重新输入');
+        } else {
+          message.success('添加成功');
+          this.handleModalVisible();
+          form.resetFields();
+          this.reload();
+        }
+        this.setState({createModalLoading: false});
+      }
     });
-    message.success('添加成功');
-    this.handleModalVisible();
   };
 
-  handleUpdate = (fields: SysUser) => {
+  handleUpdate = (fields: SysUser, form: WrappedFormUtils<any>) => {
     const { dispatch } = this.props;
+    this.setState({updateModalLoading: true});
     dispatch({
       type: 'sysUser/update',
       payload: {
         ...fields,
       },
-      callback: () => this.reload(),
+      callback: ({ code }:any) => {
+        if (code === SysUserResultCode.USERNAME_EXISTENCE) {
+          message.error('用户名已存在，请重新输入');
+        } else {
+          form.resetFields();
+          this.reload();
+          this.handleUpdateModalVisible();
+          message.success('修改成功');
+        }
+        this.setState({updateModalLoading: false});
+      },
     });
-    message.success('配置成功');
-    this.handleUpdateModalVisible();
   };
-
-
 
   renderSimpleForm() {
     const { form } = this.props;
@@ -413,9 +435,6 @@ class TableList extends Component<TableListProps, TableListState> {
               <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
                 重置
               </Button>
-              {/*<a style={{ marginLeft: 8 }} onClick={this.toggleForm}>*/}
-              {/*  展开 <Icon type="down" />*/}
-              {/*</a>*/}
             </span>
           </Col>
         </Row>
@@ -509,13 +528,7 @@ class TableList extends Component<TableListProps, TableListState> {
       loading,
     } = this.props;
 
-    const { selectedRows, modalVisible, updateModalVisible, stepFormValues } = this.state;
-    const menu = (
-      <Menu onClick={this.handleMenuClick} selectedKeys={[]}>
-        <Menu.Item key="remove">删除</Menu.Item>
-        <Menu.Item key="approval">批量审批</Menu.Item>
-      </Menu>
-    );
+    const { selectedRows, modalVisible, updateModalVisible, stepFormValues, updateModalLoading, createModalLoading } = this.state;
 
     const parentMethods = {
       handleAdd: this.handleAdd,
@@ -537,14 +550,7 @@ class TableList extends Component<TableListProps, TableListState> {
                 </Button>
               </AuthorityChecker>
               {selectedRows.length > 0 && (
-                <span>
-                  <Button>批量操作</Button>
-                  <Dropdown overlay={menu}>
-                    <Button>
-                      更多操作 <Icon type="down" />
-                    </Button>
-                  </Dropdown>
-                </span>
+                <Button onClick={() => this.handleRemoveItem()}>删除</Button>
               )}
             </div>
             <StandardTable
@@ -557,8 +563,8 @@ class TableList extends Component<TableListProps, TableListState> {
             />
           </div>
         </Card>
-        <CreateForm {...parentMethods} modalVisible={modalVisible} roles={roles} />
-        <UpdateForm  {...updateMethods} modalVisible={updateModalVisible} roles={roles} user={stepFormValues} />
+        <CreateForm {...parentMethods} modalVisible={modalVisible} roles={roles} loading={createModalLoading} />
+        <UpdateForm  {...updateMethods} modalVisible={updateModalVisible} roles={roles} user={stepFormValues} loading={updateModalLoading} />
       </PageHeaderWrapper>
     );
   }

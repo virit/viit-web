@@ -24,6 +24,5 @@ interface StateType {
   user: any
 }
 export default connect((state:StateType) => {
-  console.log(state);
   return state;
 })(AuthorityChecker);

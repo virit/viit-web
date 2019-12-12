@@ -1,8 +1,8 @@
-import { AnyAction, Reducer } from 'redux';
-import { EffectsCommandMap } from 'dva';
-import { addUser, queryUser, removeUser, updateUser } from './service';
+import {AnyAction, Reducer} from 'redux';
+import {EffectsCommandMap} from 'dva';
+import {addUser, queryUser, removeUser, updateUser} from './service';
 
-import { TableListData, TablePageQuery } from './data.d';
+import {TableListData} from './data.d';
 import {queryRoles} from "@/pages/sys/role/service";
 
 export interface StateType {
@@ -46,11 +46,12 @@ const Model: ModelType = {
   effects: {
     *fetch({ payload }, { call, put }) {
       const response = yield call(queryUser, payload);
+      const { data }= response;
       yield put({
         type: 'save',
         payload: {
           data: {
-            list: response.data.records.map((it: any) => {
+            list: data.records.map((it: any) => {
               it.key = it.id;
               return it;
             }),
@@ -69,19 +70,8 @@ const Model: ModelType = {
       });
     },
     *add({ payload, callback }, { call, put }) {
-      yield call(addUser, payload);
-      const query: TablePageQuery = {
-        page: {
-          size: 10,
-          current: 1,
-        },
-        fields: {},
-      };
-      yield put({
-        type: 'fetch',
-        payload: query,
-      });
-      if (callback) callback();
+      const response = yield call(addUser, payload);
+      if (callback) callback(response);
     },
     *remove({ payload, callback }, { call, put }) {
       yield call(removeUser, payload);
@@ -89,7 +79,7 @@ const Model: ModelType = {
     },
     *update({ payload, callback }, { call, put }) {
       const response = yield call(updateUser, payload);
-      if (callback) callback();
+      if (callback) callback(response);
     },
   },
 
