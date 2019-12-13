@@ -1,3 +1,5 @@
+import {PageQuery} from "@/utils/pages";
+
 interface SysRoleType {
   // id
   id: string;
@@ -9,4 +11,10 @@ interface SysRoleType {
   createDate: string;
   // 更新时间
   updateDate: string;
+}
+
+export interface SysRoleTypeForm {
+  id?: string;
+  typeName: string;
+  description?: string;
 }
