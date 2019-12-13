@@ -1,15 +1,14 @@
-import { Alert, Checkbox, Icon } from 'antd';
-import React, { Component } from 'react';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { Dispatch, AnyAction } from 'redux';
-import { FormComponentProps } from 'antd/es/form';
-import Link from 'umi/link';
-import { connect } from 'dva';
-import { StateType } from '@/models/login';
+import {Alert, Checkbox} from 'antd';
+import React, {Component} from 'react';
+import {CheckboxChangeEvent} from 'antd/es/checkbox';
+import {AnyAction, Dispatch} from 'redux';
+import {FormComponentProps} from 'antd/es/form';
+import {connect} from 'dva';
+import {StateType} from '@/models/login';
 import LoginComponents from './components/Login';
 import styles from './style.less';
-import { LoginParamsType } from '@/services/login';
-import { ConnectState } from '@/models/connect';
+import {LoginParamsType} from '@/services/login';
+import {ConnectState} from '@/models/connect';
 
 const { Tab, UserName, Password, Mobile, Captcha, Submit } = LoginComponents;
 interface LoginProps {
@@ -193,15 +192,15 @@ class Login extends Component<LoginProps, LoginState> {
             </a>
           </div>
           <Submit loading={submitting}>登录</Submit>
-          <div className={styles.other}>
-            其他登录方式
-            <Icon type="alipay-circle" className={styles.icon} theme="outlined" />
-            <Icon type="taobao-circle" className={styles.icon} theme="outlined" />
-            <Icon type="weibo-circle" className={styles.icon} theme="outlined" />
-            <Link className={styles.register} to="/user/register">
-              注册账户
-            </Link>
-          </div>
+          {/*<div className={styles.other}>*/}
+          {/*  其他登录方式*/}
+          {/*  <Icon type="alipay-circle" className={styles.icon} theme="outlined" />*/}
+          {/*  <Icon type="taobao-circle" className={styles.icon} theme="outlined" />*/}
+          {/*  <Icon type="weibo-circle" className={styles.icon} theme="outlined" />*/}
+          {/*  <Link className={styles.register} to="/user/register">*/}
+          {/*    注册账户*/}
+          {/*  </Link>*/}
+          {/*</div>*/}
         </LoginComponents>
       </div>
     );

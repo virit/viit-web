@@ -122,12 +122,18 @@ export default {
                   path: '/sys/user',
                   component: './sys/user',
                 },
-                // {
-                //   name: '角色类型',
-                //   icon: 'smile',
-                //   path: '/sys/roletype',
-                //   component: './sys/roleType',
-                // },
+                {
+                  name: '菜单管理',
+                  icon: 'user',
+                  path: '/sys/menu',
+                  component: './sys/menu',
+                },
+                {
+                  name: '角色类型',
+                  icon: 'smile',
+                  path: '/sys/role-type',
+                  component: './sys/roleType',
+                },
                 // {
                 //   name: '角色管理',
                 //   icon: 'smile',
@@ -206,7 +212,7 @@ export default {
   // chainWebpack: webpackPlugin,
   proxy: {
     '/api': {
-      target: 'http://47.101.155.230:8081/',
+      target: 'http://127.0.0.1:8081/',
       changeOrigin: true,
       pathRewrite: {
         '^/server': '',

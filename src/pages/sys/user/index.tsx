@@ -373,8 +373,6 @@ class TableList extends Component<TableListProps, TableListState> {
 
   showUpdateModal = (flag: boolean, record: SysUser) => {
 
-    const { dispatch, sysUser } = this.props;
-    console.log(sysUser);
     this.setState({updateModalLoading: true});
     this.handleUpdateModalVisible(flag);
 
