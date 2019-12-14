@@ -1,7 +1,13 @@
 import {Effect} from "dva";
 import {Reducer} from "redux";
 import {SysRoleType} from "@/pages/sys/roleType/data";
-import {deleteRoleType, newRoleType, queryRoleTypes} from "@/pages/sys/roleType/service";
+import {
+  deleteRoleType,
+  getRoleTypeById,
+  newRoleType,
+  queryRoleTypes,
+  updateRoleType
+} from "@/pages/sys/roleType/service";
 
 export interface StateType {
   data: {
@@ -19,9 +25,12 @@ export interface ModelType {
     fetch: Effect;
     insert: Effect;
     delete: Effect;
+    get: Effect;
+    update: Effect;
   };
   reducers: {
-    saveList: Reducer<StateType>
+    saveList: Reducer<StateType>;
+    saveOneItem: Reducer<StateType>;
   }
 }
 
@@ -63,6 +72,20 @@ const Model: ModelType = {
         payload: query,
         callback: fetchCallback
       });
+    },
+    *get({ payload, callback}, { call }) {
+      const response = yield call(getRoleTypeById, payload);
+      if (callback) callback(response);
+    },
+    *update({ payload, callback, queryCallback}, { call, put }) {
+      const response = yield call(updateRoleType, payload);
+      if (callback) callback(response);
+      const queryResponse = yield call(getRoleTypeById, payload.id);
+      yield put({
+        type: 'saveOneItem',
+        payload: queryResponse.data,
+      });
+      if (queryCallback) queryCallback();
     }
   },
   reducers: {
@@ -73,6 +96,20 @@ const Model: ModelType = {
       const newState = {...state};
       newState.data.list = payload.list;
       newState.data.pagination.total = payload.total;
+      return newState;
+    },
+    saveOneItem(state, { payload }) {
+      if (state === undefined) {
+        return {...initState};
+      }
+      const newState = {...state};
+      newState.data.list = newState.data.list.map(it => {
+        if (it.id === payload.id) {
+          return payload;
+        } else {
+          return it;
+        }
+      });
       return newState;
     }
   }

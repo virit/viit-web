@@ -22,3 +22,14 @@ export async function deleteRoleType(params: string) {
     method: 'delete'
   });
 }
+
+export async function getRoleTypeById(params: string) {
+  return request(`${resourceName}/${params}`);
+}
+
+export async function updateRoleType(params: SysRoleTypeForm) {
+  return request(`${resourceName}/${params.id}`, {
+    method: 'put',
+    data: params,
+  });
+}

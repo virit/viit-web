@@ -14,10 +14,17 @@ import {StateType} from "./model";
 import {SysRoleType, SysRoleTypeForm} from "@/pages/sys/roleType/data";
 import {Action, Dispatch} from "redux";
 import CreateForm from "./components/CreateForm";
+import UpdateForm from "./components/UpdateForm";
+import {HttpResponse} from "@/viit/model/types";
 
 const FormItem = Form.Item;
 
-type ActionType = 'sysRoleType/fetch' | 'sysRoleType/insert' | 'sysRoleType/delete';
+type ActionType =
+  'sysRoleType/fetch' |
+  'sysRoleType/insert' |
+  'sysRoleType/delete' |
+  'sysRoleType/get' |
+  'sysRoleType/update';
 
 interface Props extends FormComponentProps {
   dispatch: Dispatch<Action<ActionType>>;
@@ -45,15 +52,24 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
   const [loading, setLoading] = useState(false);
 
   // modal信息
-  interface ModelState {
+  interface ModalState {
     loading: boolean;
     visible: boolean;
   }
 
   const [createModalInfo, setCreateModalInfo] = useState({
     loading: false,
-    visible: false
-  } as ModelState);
+    visible: false,
+  } as ModalState);
+
+  interface UpdateModalState extends ModalState {
+    fields: SysRoleType;
+  }
+  const [updateModalInfo, setUpdateModalInfo] = useState({
+    loading: false,
+    visible: false,
+    fields: {},
+  } as UpdateModalState);
 
   // 初始化数据
   useEffect(() => {
@@ -216,6 +232,50 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
       onOk: () => handleDelete(selectedRowKeys),
     });
   };
+  // 处理点击修改
+  const handleClickUpdate = (id: string) => {
+    setUpdateModalInfo({
+      ...updateModalInfo,
+      visible: true,
+      loading: true,
+    } as UpdateModalState);
+    dispatch({
+      type: 'sysRoleType/get',
+      payload: id,
+      callback: (response: HttpResponse) => {
+        const fieldsValue:SysRoleType = response.data;
+        console.log(updateModalInfo);
+        setUpdateModalInfo({
+          visible: true,
+          loading: false,
+          fields: fieldsValue,
+        } as UpdateModalState);
+      }
+    });
+  };
+  // 处理修改
+  const handleUpdate = (fields: SysRoleTypeForm) => {
+    setUpdateModalInfo({
+      ...updateModalInfo,
+      loading: true,
+    });
+    dispatch({
+      type: 'sysRoleType/update',
+      payload: fields,
+      callback: () => {
+        setLoading(true);
+        setUpdateModalInfo({
+          visible: false,
+          loading: false,
+          fields: {},
+        } as UpdateModalState);
+        message.success('修改成功！');
+      },
+      queryCallback: () => {
+        setLoading(false);
+      }
+    });
+  };
   const columns: TableColumnProps[] = [
     {
       title: '类型名称',
@@ -238,6 +298,7 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
       render: (text, record) => (
         <Fragment>
           <a onClick={() => {
+            handleClickUpdate(record.id);
           }}>修改</a>
           <Divider type="vertical"/>
           <Popconfirm
@@ -338,6 +399,19 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
             });
           }}
           handleSubmit={handleNewItemSubmit}
+        />
+        <UpdateForm
+          loading={updateModalInfo.loading}
+          modalVisible={updateModalInfo.visible}
+          roleType={updateModalInfo.fields}
+          handleSubmit={handleUpdate}
+          onCancel={() => {
+            setUpdateModalInfo({
+              loading: false,
+              visible: false,
+              fields: {},
+            } as UpdateModalState);
+          }}
         />
       </Card>
     </PageHeaderWrapper>
