@@ -1,489 +1,531 @@
-import {
-  Badge,
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Divider,
-  Dropdown,
-  Form,
-  Icon,
-  Input,
-  InputNumber,
-  Menu,
-  Row,
-  Select,
-  message,
-} from 'antd';
-import React, { Component, Fragment } from 'react';
-
-import { Dispatch, Action } from 'redux';
-import { FormComponentProps } from 'antd/es/form';
-import { PageHeaderWrapper } from '@ant-design/pro-layout';
-import { SorterResult } from 'antd/es/table';
-import { connect } from 'dva';
-import moment from 'moment';
-import { StateType } from './model';
-import CreateForm from './components/CreateForm';
-import StandardTable, { StandardTableColumnProps } from './components/StandardTable';
-import UpdateForm, { FormValueType } from './components/UpdateForm';
-import { TableListItem, TableListPagination, TableListParams } from './data.d';
-
-import styles from './style.less';
+import {Alert, Button, Card, Col, Divider, Form, Input, message, Modal, Popconfirm, Row, Select, Table} from "antd";
+import {PageHeaderWrapper} from "@ant-design/pro-layout";
+import React, {Fragment, useEffect, useState} from "react";
+import {FormComponentProps} from "antd/es/form";
+import {connect} from "dva";
+import SearchForm from "@/viit/components/table/SearchForm";
+import VTContainer from "@/viit/components/table/VTContainer";
+import MenuBar from "@/viit/components/table/MenuBar";
+import SubmitButtons from "@/viit/components/table/SubmitButtons";
+import TableContainer from "@/viit/components/table/TableContainer";
+import TableInfo from "@/viit/components/table/TableInfo";
+import {ColumnProps, PaginationConfig} from "antd/es/table";
+import {StateType} from "./model";
+import {SysRole, SysRoleForm} from "./data";
+import {Action, Dispatch} from "redux";
+import CreateForm from "./components/CreateForm";
+import UpdateForm from "./components/UpdateForm";
+import {HttpResponse} from "@/viit/model/types";
+import {SysRoleType} from "@/pages/sys/roleType/data";
+import AssignAuthorityModal from "@/pages/sys/role/components/AssignAuthorityModal";
 
 const FormItem = Form.Item;
-const { Option } = Select;
-const getValue = (obj: { [x: string]: string[] }) =>
-  Object.keys(obj)
-    .map(key => obj[key])
-    .join(',');
 
-type IStatusMapType = 'default' | 'processing' | 'success' | 'error';
-const statusMap = ['default', 'processing', 'success', 'error'];
-const status = ['关闭', '运行中', '已上线', '异常'];
+type ActionType =
+  'sysRole/fetch' |
+  'sysRole/insert' |
+  'sysRole/delete' |
+  'sysRole/get' |
+  'sysRole/update'|
+  'sysRole/fetchRoleTypes' |
+  'sysRole/fetchMenuTree';
 
-interface TableListProps extends FormComponentProps {
-  dispatch: Dispatch<
-    Action<
-      | 'sysAndrole/add'
-      | 'sysAndrole/fetch'
-      | 'sysAndrole/remove'
-      | 'sysAndrole/update'
-    >
-  >;
-  loading: boolean;
-  sysAndrole: StateType;
+interface Props extends FormComponentProps {
+  dispatch: Dispatch<Action<ActionType>>;
+  sysRole: StateType
 }
 
-interface TableListState {
-  modalVisible: boolean;
-  updateModalVisible: boolean;
-  expandForm: boolean;
-  selectedRows: TableListItem[];
-  formValues: { [key: string]: string };
-  stepFormValues: Partial<TableListItem>;
+interface TableColumnProps extends ColumnProps<SysRole> {
 }
 
-/* eslint react/no-multi-comp:0 */
-@connect(
-  ({
-    sysAndrole,
-    loading,
-  }: {
-    sysAndrole: StateType;
-    loading: {
-      models: {
-        [key: string]: boolean;
-      };
-    };
-  }) => ({
-    sysAndrole,
-    loading: loading.models.sysAndrole,
-  }),
-)
-class TableList extends Component<TableListProps, TableListState> {
-  state: TableListState = {
-    modalVisible: false,
-    updateModalVisible: false,
-    expandForm: false,
-    selectedRows: [],
-    formValues: {},
-    stepFormValues: {},
+const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
+
+  const {getFieldDecorator} = form;
+
+  // 搜索表单
+  const [searchFormFields, setSearchFormFields] = useState({});
+  // 分页信息
+  const [pageInfo, setPageInfo] = useState({
+    current: 1,
+    pageSize: 10,
+  });
+  // 选中行
+  const rolKeys: string[] | number[] = [];
+  const [selectedRowKeys, setSelectedRowKeys] = useState(rolKeys);
+  // 加载
+  const [loading, setLoading] = useState(false);
+
+  // modal信息
+  interface ModalState {
+    loading: boolean;
+    visible: boolean;
+  }
+
+  const [createModalInfo, setCreateModalInfo] = useState({
+    loading: false,
+    visible: false,
+  } as ModalState);
+
+  interface UpdateModalState extends ModalState {
+    fields: SysRole;
+  }
+  const [updateModalInfo, setUpdateModalInfo] = useState({
+    loading: false,
+    visible: false,
+    fields: {},
+  } as UpdateModalState);
+
+  interface AuthorityState {
+    visible: boolean;
+    record: SysRole | {};
+    loading: boolean;
+  }
+  const [assignModalState, setAssignModalState] = useState({
+    visible: false,
+    record: {},
+    loading: false,
+  } as AuthorityState);
+
+  // 初始化数据
+  useEffect(() => {
+    setLoading(true);
+    dispatch({
+      type: 'sysRole/fetch',
+      payload: {
+        page: {
+          ...pageInfo,
+        }
+      },
+      callback: () => {
+        setLoading(false);
+      }
+    });
+    dispatch({
+      type: 'sysRole/fetchRoleTypes'
+    });
+    dispatch({
+      type: 'sysRole/fetchMenuTree'
+    });
+  }, []);
+  // 设置分页
+  const onTableChange = (pagination: PaginationConfig) => {
+    setLoading(true);
+    setPageInfo({
+      current: pagination.current || 1,
+      pageSize: pagination.pageSize || 10,
+    });
+    dispatch({
+      type: 'sysRole/fetch',
+      payload: {
+        page: {
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+        },
+        fields: {...searchFormFields}
+      },
+      callback: () => {
+        setLoading(false);
+      },
+    });
   };
+  // 处理查询
+  const handleSearchFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    form.validateFields((err, fieldsValue) => {
+      if (err) {
+        return;
+      }
+      setLoading(true);
+      setSelectedRowKeys([]);
+      setSearchFormFields({...fieldsValue});
+      const newPageInfo = {
+        ...pageInfo,
+        current: 1,
+      };
+      setPageInfo(newPageInfo);
+      dispatch({
+        type: 'sysRole/fetch',
+        payload: {
+          page: {
+            ...newPageInfo,
+          },
+          fields: {...fieldsValue}
+        },
+        callback: () => setLoading(false),
+      });
+    });
+  };
+  // 处理重置
+  const handleReset = () => {
+    setSelectedRowKeys([]);
+    setSearchFormFields({});
+    form.resetFields();
+    const newPageInfo = {
+      ...pageInfo,
+      current: 1,
+    };
+    setLoading(true);
+    setPageInfo(newPageInfo);
+    dispatch({
+      type: 'sysRole/fetch',
+      payload: {
+        page: {
+          ...newPageInfo,
+        }
+      },
+      callback: () => setLoading(false),
+    });
+  };
+  // 新建
+  const handleNewItem = () => {
+    setCreateModalInfo({
+      ...createModalInfo,
+      visible: true,
+    });
+  };
+  // 处理新增操作
+  const handleNewItemSubmit = (fields: SysRoleForm) => {
+    setCreateModalInfo({
+      ...createModalInfo,
+      loading: true,
+    });
+    dispatch({
+      type: 'sysRole/insert',
+      payload: fields,
+      callback: () => {
+        setCreateModalInfo({
+          visible: false,
+          loading: false,
+        });
+        message.success('添加成功！');
+        const newPageInfo = {
+          ...pageInfo,
+          current: 1,
+        };
+        setSelectedRowKeys([]);
+        setSearchFormFields({});
+        setPageInfo(newPageInfo);
+        form.resetFields();
+        const query = {
+          page: {
+            ...newPageInfo,
+          }
+        };
+        dispatch({
+          type: 'sysRole/fetch',
+          payload: query
+        });
+      }
+    });
+  };
+  // 处理删除
+  const handleDelete = (id: string | string[] | number[]) => {
+    if (Array.isArray(id)) {
+      id = id.join(',');
+    }
+    setLoading(true);
+    dispatch({
+      type: 'sysRole/delete',
+      payload: id,
+      query: {
+        page: {
+          ...pageInfo,
+        },
+        fields: {
+          ...searchFormFields,
+        },
+      },
+      callback: () => {
+        message.success('删除成功！');
+        setSelectedRowKeys([]);
+      },
+      fetchCallback: () => {
+        setLoading(false);
+      }
+    });
+  };
+  // 删除多项
+  const handleDeleteMany = () => {
+    Modal.confirm({
+      title: '提示',
+      content: '确认删除吗？',
+      okText: '确认',
+      cancelText: '取消',
+      onOk: () => handleDelete(selectedRowKeys),
+    });
+  };
+  // 处理点击修改
+  const handleClickUpdate = (id: string) => {
+    setUpdateModalInfo({
+      ...updateModalInfo,
+      visible: true,
+      loading: true,
+    } as UpdateModalState);
+    dispatch({
+      type: 'sysRole/get',
+      payload: id,
+      callback: (response: HttpResponse) => {
+        const fieldsValue:SysRole = response.data;
+        console.log(updateModalInfo);
+        setUpdateModalInfo({
+          visible: true,
+          loading: false,
+          fields: fieldsValue,
+        } as UpdateModalState);
+      }
+    });
+  };
+  // 处理修改
+  const handleUpdate = (fields: SysRoleForm) => {
+    setUpdateModalInfo({
+      ...updateModalInfo,
+      loading: true,
+    });
+    dispatch({
+      type: 'sysRole/update',
+      payload: fields,
+      callback: () => {
+        setLoading(true);
+        setUpdateModalInfo({
+          visible: false,
+          loading: false,
+          fields: {},
+        } as UpdateModalState);
+        message.success('修改成功！');
+      },
+      queryCallback: () => {
+        setLoading(false);
+      }
+    });
+  };
+  // 处理分配权限
+  const assignClickAssign = (record: SysRole) => {
+    setAssignModalState({
+      visible: true,
+      record: record,
+      loading: false,
+    });
+  };
+  const handleAssign = (id:string, menus:string[]) => {
 
-  columns: StandardTableColumnProps[] = [
+    const newState = {
+      ...assignModalState,
+      loading: true,
+      record: {
+        ...assignModalState.record,
+        menuIdList: menus,
+      },
+    };
+    setAssignModalState(newState);
+    dispatch({
+      type: 'sysRole/update',
+      payload: {
+        id: id,
+        menuIdList: menus,
+      },
+      callback: () => {
+        setLoading(true);
+        setAssignModalState({
+          visible: false,
+          loading: false,
+          record: {},
+        } as AuthorityState);
+        message.success('分配成功！');
+      },
+      queryCallback: () => {
+        setLoading(false);
+      }
+    });
+  };
+  const columns: TableColumnProps[] = [
     {
-      title: '规则名称',
+      title: '角色名称',
       dataIndex: 'name',
     },
     {
+      title: '角色标识',
+      dataIndex: 'code',
+    },
+    {
+      title: '角色类型',
+      dataIndex: 'infoFields.typeIdText',
+    },
+    {
       title: '描述',
-      dataIndex: 'desc',
+      dataIndex: 'description',
     },
     {
-      title: '服务调用次数',
-      dataIndex: 'callNo',
-      sorter: true,
-      align: 'right',
-      render: (val: string) => `${val} 万`,
-      // mark to display a total number
-      needTotal: true,
+      title: '创建时间',
+      dataIndex: 'createDate',
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      filters: [
-        {
-          text: status[0],
-          value: '0',
-        },
-        {
-          text: status[1],
-          value: '1',
-        },
-        {
-          text: status[2],
-          value: '2',
-        },
-        {
-          text: status[3],
-          value: '3',
-        },
-      ],
-      render(val: IStatusMapType) {
-        return <Badge status={statusMap[val]} text={status[val]} />;
-      },
-    },
-    {
-      title: '上次调度时间',
-      dataIndex: 'updatedAt',
-      sorter: true,
-      render: (val: string) => <span>{moment(val).format('YYYY-MM-DD HH:mm:ss')}</span>,
+      title: '更新时间',
+      dataIndex: 'updateDate',
     },
     {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => this.handleUpdateModalVisible(true, record)}>配置</a>
-          <Divider type="vertical" />
-          <a href="">订阅警报</a>
+          <a onClick={() => {
+            handleClickUpdate(record.id);
+          }}>修改</a>
+          <Divider type="vertical"/>
+          <Popconfirm
+            title="确定删除此项数据吗?"
+            onConfirm={() => {
+              handleDelete(record.id);
+            }}
+            okText="是"
+            cancelText="否"
+          >
+            <a>删除</a>
+          </Popconfirm>
+          <Divider type="vertical"/>
+          <a onClick={(e) => {
+            e.preventDefault();
+            assignClickAssign(record);
+          }}>分配权限</a>
         </Fragment>
       ),
     },
   ];
 
-  componentDidMount() {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'sysAndrole/fetch',
-    });
-  }
-
-  handleStandardTableChange = (
-    pagination: Partial<TableListPagination>,
-    filtersArg: Record<keyof TableListItem, string[]>,
-    sorter: SorterResult<TableListItem>,
-  ) => {
-    const { dispatch } = this.props;
-    const { formValues } = this.state;
-
-    const filters = Object.keys(filtersArg).reduce((obj, key) => {
-      const newObj = { ...obj };
-      newObj[key] = getValue(filtersArg[key]);
-      return newObj;
-    }, {});
-
-    const params: Partial<TableListParams> = {
-      currentPage: pagination.current,
-      pageSize: pagination.pageSize,
-      ...formValues,
-      ...filters,
-    };
-    if (sorter.field) {
-      params.sorter = `${sorter.field}_${sorter.order}`;
-    }
-
-    dispatch({
-      type: 'sysAndrole/fetch',
-      payload: params,
-    });
-  };
-
-  handleFormReset = () => {
-    const { form, dispatch } = this.props;
-    form.resetFields();
-    this.setState({
-      formValues: {},
-    });
-    dispatch({
-      type: 'sysAndrole/fetch',
-      payload: {},
-    });
-  };
-
-  toggleForm = () => {
-    const { expandForm } = this.state;
-    this.setState({
-      expandForm: !expandForm,
-    });
-  };
-
-  handleMenuClick = (e: { key: string }) => {
-    const { dispatch } = this.props;
-    const { selectedRows } = this.state;
-
-    if (!selectedRows) return;
-    switch (e.key) {
-      case 'remove':
-        dispatch({
-          type: 'sysAndrole/remove',
-          payload: {
-            key: selectedRows.map(row => row.key),
-          },
-          callback: () => {
-            this.setState({
-              selectedRows: [],
-            });
-          },
-        });
-        break;
-      default:
-        break;
-    }
-  };
-
-  handleSelectRows = (rows: TableListItem[]) => {
-    this.setState({
-      selectedRows: rows,
-    });
-  };
-
-  handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const { dispatch, form } = this.props;
-
-    form.validateFields((err, fieldsValue) => {
-      if (err) return;
-
-      const values = {
-        ...fieldsValue,
-        updatedAt: fieldsValue.updatedAt && fieldsValue.updatedAt.valueOf(),
-      };
-
-      this.setState({
-        formValues: values,
-      });
-
-      dispatch({
-        type: 'sysAndrole/fetch',
-        payload: values,
-      });
-    });
-  };
-
-  handleModalVisible = (flag?: boolean) => {
-    this.setState({
-      modalVisible: !!flag,
-    });
-  };
-
-  handleUpdateModalVisible = (flag?: boolean, record?: FormValueType) => {
-    this.setState({
-      updateModalVisible: !!flag,
-      stepFormValues: record || {},
-    });
-  };
-
-  handleAdd = (fields: { desc: any }) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'sysAndrole/add',
-      payload: {
-        desc: fields.desc,
-      },
-    });
-
-    message.success('添加成功');
-    this.handleModalVisible();
-  };
-
-  handleUpdate = (fields: FormValueType) => {
-    const { dispatch } = this.props;
-    dispatch({
-      type: 'sysAndrole/update',
-      payload: {
-        name: fields.name,
-        desc: fields.desc,
-        key: fields.key,
-      },
-    });
-
-    message.success('配置成功');
-    this.handleUpdateModalVisible();
-  };
-
-  renderSimpleForm() {
-    const { form } = this.props;
-    const { getFieldDecorator } = form;
-    return (
-      <Form onSubmit={this.handleSearch} layout="inline">
-        <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
-          <Col md={8} sm={24}>
-            <FormItem label="规则名称">
-              {getFieldDecorator('name')(<Input placeholder="请输入" />)}
+  // 搜索表单
+  const searchForm = (
+    <SearchForm>
+      <Form layout="inline" onSubmit={handleSearchFormSubmit}>
+        <Row gutter={{md: 8, lg: 24, xl: 48}}>
+          <Col md={12} lg={6} sm={24}>
+            <FormItem label="角色名称">
+              {getFieldDecorator('name')(<Input placeholder="请输入"/>)}
             </FormItem>
           </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="使用状态">
-              {getFieldDecorator('status')(
-                <Select placeholder="请选择" style={{ width: '100%' }}>
-                  <Option value="0">关闭</Option>
-                  <Option value="1">运行中</Option>
-                </Select>,
+          <Col md={12} lg={6} sm={24}>
+            <FormItem label="角色标识">
+              {getFieldDecorator('code')(<Input placeholder="请输入"/>)}
+            </FormItem>
+          </Col>
+          <Col md={12} lg={6} sm={24}>
+            <FormItem label="角色类型">
+              {getFieldDecorator('typeId')(
+                <Select style={{ width: '100%'}} placeholder="请选择" disabled={sysRole.data.roleTypes === undefined}>
+                  {
+                    (sysRole.data.roleTypes || [] as SysRoleType[]).map(it => {
+                      return <Select.Option key={it.id}>{it.typeName}</Select.Option>;
+                    })
+                  }
+                </Select>
               )}
             </FormItem>
           </Col>
-          <Col md={8} sm={24}>
-            <span className={styles.submitButtons}>
+          <Col md={12} lg={6} sm={24}>
+            <SubmitButtons>
               <Button type="primary" htmlType="submit">
                 查询
               </Button>
-              <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
+              <Button style={{marginLeft: 8}} onClick={handleReset}>
                 重置
               </Button>
-              <a style={{ marginLeft: 8 }} onClick={this.toggleForm}>
-                展开 <Icon type="down" />
-              </a>
-            </span>
+            </SubmitButtons>
           </Col>
         </Row>
       </Form>
-    );
-  }
+    </SearchForm>
+  );
 
-  renderAdvancedForm() {
-    const {
-      form: { getFieldDecorator },
-    } = this.props;
-    return (
-      <Form onSubmit={this.handleSearch} layout="inline">
-        <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
-          <Col md={8} sm={24}>
-            <FormItem label="规则名称">
-              {getFieldDecorator('name')(<Input placeholder="请输入" />)}
-            </FormItem>
-          </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="使用状态">
-              {getFieldDecorator('status')(
-                <Select placeholder="请选择" style={{ width: '100%' }}>
-                  <Option value="0">关闭</Option>
-                  <Option value="1">运行中</Option>
-                </Select>,
-              )}
-            </FormItem>
-          </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="调用次数">
-              {getFieldDecorator('number')(<InputNumber style={{ width: '100%' }} />)}
-            </FormItem>
-          </Col>
-        </Row>
-        <Row gutter={{ md: 8, lg: 24, xl: 48 }}>
-          <Col md={8} sm={24}>
-            <FormItem label="更新日期">
-              {getFieldDecorator('date')(
-                <DatePicker style={{ width: '100%' }} placeholder="请输入更新日期" />,
-              )}
-            </FormItem>
-          </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="使用状态">
-              {getFieldDecorator('status3')(
-                <Select placeholder="请选择" style={{ width: '100%' }}>
-                  <Option value="0">关闭</Option>
-                  <Option value="1">运行中</Option>
-                </Select>,
-              )}
-            </FormItem>
-          </Col>
-          <Col md={8} sm={24}>
-            <FormItem label="使用状态">
-              {getFieldDecorator('status4')(
-                <Select placeholder="请选择" style={{ width: '100%' }}>
-                  <Option value="0">关闭</Option>
-                  <Option value="1">运行中</Option>
-                </Select>,
-              )}
-            </FormItem>
-          </Col>
-        </Row>
-        <div style={{ overflow: 'hidden' }}>
-          <div style={{ float: 'right', marginBottom: 24 }}>
-            <Button type="primary" htmlType="submit">
-              查询
+  return (
+    <PageHeaderWrapper>
+      <Card bordered={false}>
+        <VTContainer>
+          {searchForm}
+          <MenuBar>
+            <Button icon="plus" type="primary" onClick={handleNewItem}>
+              新建
             </Button>
-            <Button style={{ marginLeft: 8 }} onClick={this.handleFormReset}>
-              重置
+            {selectedRowKeys.length > 0 &&
+            <Button onClick={handleDeleteMany}>
+              删除
             </Button>
-            <a style={{ marginLeft: 8 }} onClick={this.toggleForm}>
-              收起 <Icon type="up" />
-            </a>
-          </div>
-        </div>
-      </Form>
-    );
-  }
-
-  renderForm() {
-    const { expandForm } = this.state;
-    return expandForm ? this.renderAdvancedForm() : this.renderSimpleForm();
-  }
-
-  render() {
-    const {
-      sysAndrole: { data },
-      loading,
-    } = this.props;
-
-    const { selectedRows, modalVisible, updateModalVisible, stepFormValues } = this.state;
-    const menu = (
-      <Menu onClick={this.handleMenuClick} selectedKeys={[]}>
-        <Menu.Item key="remove">删除</Menu.Item>
-        <Menu.Item key="approval">批量审批</Menu.Item>
-      </Menu>
-    );
-
-    const parentMethods = {
-      handleAdd: this.handleAdd,
-      handleModalVisible: this.handleModalVisible,
-    };
-    const updateMethods = {
-      handleUpdateModalVisible: this.handleUpdateModalVisible,
-      handleUpdate: this.handleUpdate,
-    };
-    return (
-      <PageHeaderWrapper>
-        <Card bordered={false}>
-          <div className={styles.tableList}>
-            <div className={styles.tableListForm}>{this.renderForm()}</div>
-            <div className={styles.tableListOperator}>
-              <Button icon="plus" type="primary" onClick={() => this.handleModalVisible(true)}>
-                新建
-              </Button>
-              {selectedRows.length > 0 && (
-                <span>
-                  <Button>批量操作</Button>
-                  <Dropdown overlay={menu}>
-                    <Button>
-                      更多操作 <Icon type="down" />
-                    </Button>
-                  </Dropdown>
-                </span>
-              )}
-            </div>
-            <StandardTable
-              selectedRows={selectedRows}
+            }
+          </MenuBar>
+          <TableContainer>
+            <TableInfo>
+              <Alert
+                message={
+                  <Fragment>
+                    已选择 <a style={{fontWeight: 600}}>{selectedRowKeys.length}</a> 项
+                  </Fragment>
+                }
+                type="info"
+                showIcon
+              />
+            </TableInfo>
+            <Table
               loading={loading}
-              data={data}
-              columns={this.columns}
-              onSelectRow={this.handleSelectRows}
-              onChange={this.handleStandardTableChange}
-            />
-          </div>
-        </Card>
-        <CreateForm {...parentMethods} modalVisible={modalVisible} />
-        {stepFormValues && Object.keys(stepFormValues).length ? (
-          <UpdateForm
-            {...updateMethods}
-            updateModalVisible={updateModalVisible}
-            values={stepFormValues}
-          />
-        ) : null}
-      </PageHeaderWrapper>
-    );
-  }
-}
-
-export default Form.create<TableListProps>()(TableList);
+              columns={columns}
+              onChange={onTableChange}
+              dataSource={sysRole.data.list}
+              rowSelection={{
+                onChange: (selectedRowKeys) => {
+                  setSelectedRowKeys(selectedRowKeys)
+                },
+                selectedRowKeys: selectedRowKeys,
+              }}
+              pagination={{
+                showQuickJumper: true,
+                showSizeChanger: true,
+                ...pageInfo,
+                ...sysRole.data.pagination,
+                showTotal: (total, range) => `第${range[0]}-${range[1]}条，共${total}条`
+              }}
+              rowKey="id"/>
+          </TableContainer>
+        </VTContainer>
+        <CreateForm
+          loading={createModalInfo.loading || sysRole.data.roleTypes === undefined}
+          modalVisible={createModalInfo.visible}
+          onCancel={() => {
+            setCreateModalInfo({
+              loading: false,
+              visible: false,
+            });
+          }}
+          handleSubmit={handleNewItemSubmit}
+          roleTypes={sysRole.data.roleTypes}
+        />
+        <UpdateForm
+          loading={updateModalInfo.loading || sysRole.data.roleTypes === undefined}
+          modalVisible={updateModalInfo.visible}
+          role={updateModalInfo.fields}
+          handleSubmit={handleUpdate}
+          onCancel={() => {
+            setUpdateModalInfo({
+              loading: false,
+              visible: false,
+              fields: {},
+            } as UpdateModalState);
+          }}
+          roleTypes={sysRole.data.roleTypes}
+        />
+        <AssignAuthorityModal
+          visible={assignModalState.visible}
+          treeData={sysRole.data.menuTree}
+          record={assignModalState.record}
+          onCancel={() => {
+            setAssignModalState({
+              visible: false,
+              record: {},
+              loading: false,
+            });
+          }}
+          handleAssign={handleAssign}
+          loading={assignModalState.loading}
+        />
+      </Card>
+    </PageHeaderWrapper>
+  );
+};
+const ConnectedComponent = connect(
+  ({sysRole}: { sysRole: StateType }) => ({sysRole})
+)(sysRoleComponent);
+export default Form.create<Props>()(ConnectedComponent);

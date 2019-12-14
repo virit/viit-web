@@ -1,44 +1,32 @@
-export interface TableListItem {
-  key: number;
-  disabled?: boolean;
-  href: string;
-  avatar: string;
-  name: string;
-  title: string;
-  owner: string;
-  desc: string;
-  callNo: number;
-  status: number;
-  updatedAt: Date;
-  createdAt: Date;
-  progress: number;
-}
+import {PageQuery} from "@/utils/pages";
 
-export interface TableListPagination {
-  total: number;
-  pageSize: number;
-  current: number;
-}
-
-export interface TableListData {
-  list: TableListItem[];
-  pagination: Partial<TableListPagination>;
-}
-
-export interface TableListParams {
-  sorter: string;
-  status: string;
-  name: string;
-  pageSize: number;
-  currentPage: number;
-}
-
-export interface Role {
+interface SysRole {
+  // id
   id: string;
+  //角色名称
   name: string;
+  // 角色标识
   code: string;
+  // 角色类型id
   typeId: string;
+  // 描述
   description: string;
+  // 创建时间
   createDate: string;
+  // 更新时间
   updateDate: string;
+  menuIdList?: string[];
+  infoFields: any;
+}
+
+export interface SysRoleForm {
+  id?: string;
+  //角色名称
+  name: string;
+  // 角色标识
+  code: string;
+  // 角色类型id
+  typeId: string;
+  // 描述
+  description: string;
 }

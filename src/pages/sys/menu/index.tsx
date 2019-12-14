@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {PageHeaderWrapper} from "@ant-design/pro-layout";
 import {Button, Card, Col, Form, Input, Modal, Radio, Row, Spin, Tree} from "antd";
-import {MenuTreeItem} from "@/pages/sys/menu/data";
+import {MenuTreeItem, SysMenu} from "@/pages/sys/menu/data";
 import {connect} from "dva";
 import {StateType} from "@/pages/sys/menu/model";
 import {Action, Dispatch} from "redux";
@@ -13,9 +13,25 @@ const {TreeNode} = Tree;
 
 interface Props extends FormComponentProps {
   sysMenu: StateType;
-  dispatch: Dispatch<Action<| 'sysMenu/fetchMenus'
-    | 'sysMenu/queryMenuInfo'>>;
+  dispatch: Dispatch<
+    Action<
+      | 'sysMenu/fetchMenus'
+      | 'sysMenu/queryMenuInfo'
+      | 'sysMenu/delete'
+      | 'sysMenu/saveFormValues'
+      | 'sysMenu/insert'
+      | 'sysMenu/update'
+      | 'sysMenu/updateOneTreeNode'
+      >
+    >;
 }
+
+type FormType = 0 | 1;
+
+export const SysMenuType = {
+  MENU: 10,
+  BUTTON: 20,
+};
 
 const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
 
@@ -25,6 +41,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     visible: false,
     loading: false,
   });
+  const [formType, setFormType] = useState(0 as FormType);
   const size = DocumentSize();
   const formValues = sysMenu.data.formValues;
 
@@ -43,15 +60,22 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
   }, []);
 
   useEffect(() => {
-    form.setFieldsValue({
+    const values = {
       title: formValues.title,
       type: formValues.type,
-      url: formValues.url,
-    });
-  }, [formValues]);
+    };
+    if (formValues.type === SysMenuType.MENU) {
+      values['url'] = formValues.url;
+      values['icon'] = formValues.icon;
+    } else if (formValues.type === SysMenuType.BUTTON) {
+      values['authority'] = formValues.authority;
+    }
+    form.setFieldsValue(values);
+  }, [formValues.id]);
 
   const onClickNode = ([id]: string[]) => {
     if (id !== undefined) {
+      setFormType(1);
       setSelectedId(id);
       setInfoModal({visible: true, loading: true});
       dispatch({
@@ -61,7 +85,100 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
           setInfoModal({visible: true, loading: false});
         }
       });
+    } else {
+      setFormType(0);
+      form.resetFields();
+      form.setFieldsValue({
+        type: SysMenuType.MENU,
+      });
+      dispatch({
+        type: 'sysMenu/saveFormValues',
+        payload: {
+          type: SysMenuType.MENU,
+        }
+      });
+      setSelectedId(undefined);
     }
+  };
+
+  // 删除
+  const handleDelete = () => {
+    Modal.confirm({
+      title: '提示',
+      content: '确认删除吗？这会其下所有节点',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: () => {
+        setLoading(true);
+        setInfoModal({
+          ...infoModal,
+          loading: true,
+        });
+        setFormType(0);
+        dispatch({
+          type: 'sysMenu/delete',
+          payload: selectedId,
+          callback: () => {
+            setLoading(false);
+            form.resetFields();
+            form.setFieldsValue({
+              type: SysMenuType.MENU,
+            });
+            setInfoModal({
+              ...infoModal,
+              loading: false,
+            });
+          },
+        });
+      },
+    });
+  };
+  // 保存
+  const handleSave = () => {
+    form.validateFields((err, values: SysMenu) => {
+      if (err) {
+        return;
+      }
+      setInfoModal({
+        ...infoModal,
+        loading: true
+      });
+      if (formType === 0) {
+        // 新增
+        values.parentId = selectedId;
+        dispatch({
+          type: 'sysMenu/insert',
+          payload: values,
+          callback: (id: string) => {
+
+            setInfoModal({
+              ...infoModal,
+              loading: false
+            });
+          }
+        });
+      } else if (formType === 1) {
+        // 修改
+        values.id = selectedId;
+        dispatch({
+          type: 'sysMenu/update',
+          payload: values,
+          callback: () => {
+            dispatch({
+              type: 'sysMenu/updateOneTreeNode',
+              payload: {
+                id: selectedId,
+                label: values.title,
+              },
+            });
+            setInfoModal({
+              ...infoModal,
+              loading: false
+            });
+          }
+        });
+      }
+    });
   };
 
   const renderTreeNodes: any = (data: MenuTreeItem[]) => {
@@ -81,7 +198,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     <Spin spinning={infoModal.loading}>
       <Form.Item label="菜单名称" labelCol={{span: 5}} wrapperCol={{span: 19}}>
         {form.getFieldDecorator('title', {
-          rules: [{required: true, message: '用户名为4到16位字符！', min: 4, max: 16}],
+          rules: [{required: true, message: '菜单名称不能为空且最长为16个字符！', max: 16}],
         })(
           <Input/>
         )}
@@ -89,25 +206,62 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
 
       <Form.Item label="菜单类型" labelCol={{span: 5}} wrapperCol={{span: 19}}>
         {form.getFieldDecorator('type', {
-          rules: [{required: true, message: '用户名为4到16位字符！', min: 4, max: 16}],
+          rules: [{required: true, message: '菜单类型必填！',}],
         })(
-          <Radio.Group>
-            <Radio value={1}>菜单</Radio>
-            <Radio value={2}>按钮</Radio>
+          <Radio.Group onChange={e => {
+            const value = e.target.value;
+            dispatch({
+              type: 'sysMenu/saveFormValues',
+              payload: {
+                ...sysMenu.data.formValues,
+                type: value,
+              }
+            });
+          }}>
+            <Radio value={SysMenuType.MENU}>菜单</Radio>
+            <Radio value={SysMenuType.BUTTON}>按钮</Radio>
           </Radio.Group>
         )}
       </Form.Item>
-
-      <Form.Item label="页面路径" labelCol={{span: 5}} wrapperCol={{span: 19}}>
-        {form.getFieldDecorator('url', {
-          rules: [{required: true}],
-        })(
-          <Input/>
-        )}
-      </Form.Item>
+      {
+        formValues.type === 10 ? (
+          <>
+            <Form.Item label="页面路径" labelCol={{span: 5}} wrapperCol={{span: 19}}>
+            {form.getFieldDecorator('url', {
+              rules: [{required: true}],
+            })(
+              <Input/>
+            )}
+          </Form.Item>
+            <Form.Item label="图标" labelCol={{span: 5}} wrapperCol={{span: 19}}>
+              {form.getFieldDecorator('icon', {
+                rules: [],
+              })(
+                <Input/>
+              )}
+            </Form.Item>
+          </>
+        ) : (
+          <Form.Item label="权限标识" labelCol={{span: 5}} wrapperCol={{span: 19}}>
+            {form.getFieldDecorator('authority', {
+              rules: [{required: true}],
+            })(
+              <Input/>
+            )}
+          </Form.Item>
+        )
+      }
       {checkBreakPoint(['xs', 'sm'], size.width) ? <></> :
       <Form.Item labelCol={{span: 5}} wrapperCol={{span: 19, push: 5}}>
-        <Button type="primary">修改</Button>
+        <Button type="primary" onClick={e => {
+          e.preventDefault();
+          handleSave();
+        }}>
+          {
+            formType === 0 ? '新增' : '修改'
+          }
+        </Button>
+
       </Form.Item>
       }
     </Spin>
@@ -117,12 +271,29 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     <PageHeaderWrapper>
       <Card bordered={false}>
         <div style={{marginBottom: '16px'}}>
-          <Button icon="plus" type="primary" style={{marginRight: '8px'}}>
+          <Button
+            icon="plus"
+            type="primary"
+            style={{marginRight: '8px'}}
+            onClick={() => {
+              setFormType(0);
+              form.resetFields();
+              form.setFieldsValue({
+                type: SysMenuType.MENU,
+              });
+              dispatch({
+                type: 'sysMenu/saveFormValues',
+                payload: {
+                  type: SysMenuType.MENU,
+                }
+              });
+            }}
+          >
             新建
           </Button>
           {
             selectedId &&
-            <Button>
+            <Button onClick={handleDelete}>
               删除
             </Button>
           }

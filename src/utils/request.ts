@@ -4,6 +4,7 @@
  */
 import {extend} from 'umi-request';
 import {notification} from 'antd';
+import {stringify} from "querystring";
 
 const codeMessage = {
   200: '服务器成功返回请求的数据。',
@@ -60,11 +61,19 @@ const request = (url: string, params?: any) => {
   const checkPromise:any = new Promise((resolve) => {
     promise.then((it: any) => {
       const code = it.code;
-      if (code === 4030) {
-
-      } else {
-        resolve(it);
+      switch (code) {
+        case 4010: {
+          const queryString = stringify({
+            redirect: window.location.href,
+          });
+          window.location.href = `/user/login?${queryString}`;
+          return;
+        }
+        case 4030: {
+          return;
+        }
       }
+      resolve(it);
     });
   });
   return checkPromise;

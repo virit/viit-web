@@ -1,40 +1,35 @@
-import request from '@/utils/request';
-import { TableListParams } from './data.d';
+import {PageQuery, toQueryParams} from "@/utils/pages";
+import request from "@/utils/request";
+import {SysRoleTypeForm} from "@/pages/sys/roleType/data";
 
 const resourceName = '/sys/role';
 
-export async function queryRoles(params: TableListParams) {
+export async function query(params: PageQuery) {
   return request(resourceName, {
-    params,
+    params: toQueryParams(params)
   });
 }
 
-export async function removeRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'delete',
-    },
+export async function newRecord(params: SysRoleTypeForm) {
+  return request(resourceName, {
+    method: 'post',
+    data: params,
   });
 }
 
-export async function addRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'post',
-    },
+export async function deleteRecords(params: string) {
+  return request(`${resourceName}/${params}`, {
+    method: 'delete'
   });
 }
 
-export async function updateRule(params: TableListParams) {
-  return request('/api/rule', {
-    method: 'POST',
-    data: {
-      ...params,
-      method: 'update',
-    },
+export async function get(params: string) {
+  return request(`${resourceName}/${params}`);
+}
+
+export async function update(params: SysRoleTypeForm) {
+  return request(`${resourceName}/${params.id}`, {
+    method: 'put',
+    data: params,
   });
 }

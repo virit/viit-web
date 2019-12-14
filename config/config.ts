@@ -134,6 +134,12 @@ export default {
                   path: '/sys/role-type',
                   component: './sys/roleType',
                 },
+                {
+                  name: '角色管理',
+                  icon: 'smile',
+                  path: '/sys/role',
+                  component: './sys/role',
+                },
                 // {
                 //   name: '角色管理',
                 //   icon: 'smile',

@@ -2,7 +2,7 @@ import {Form, Input, Modal, Select, Spin} from 'antd';
 
 import {FormComponentProps} from 'antd/es/form';
 import React, {useEffect} from 'react';
-import {Role} from "@/pages/sys/role/data";
+import {SysRole} from "@/pages/sys/role/data";
 import {SysUser} from "@/pages/sys/user/data";
 import {WrappedFormUtils} from "antd/lib/form/Form";
 
@@ -13,7 +13,7 @@ interface UpdateFormProps extends FormComponentProps {
   modalVisible: boolean;
   handleUpdate: (fieldsValue: SysUser, form: WrappedFormUtils<any>) => void;
   handleUpdateModalVisible: () => void;
-  roles: Role[];
+  roles: SysRole[];
   user: Partial<SysUser>;
   loading: boolean;
 }
@@ -29,7 +29,7 @@ const CreateForm: React.FC<UpdateFormProps> = props => {
       }, form);
     });
   };
-  const options = roles.map(role => <Option key={role.code}>{role.name}</Option>);
+  const options = roles.map(role => <Option key={role.id}>{role.name}</Option>);
   useEffect(() => {
     form.setFieldsValue({
       username: user.username,

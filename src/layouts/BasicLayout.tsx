@@ -4,7 +4,7 @@
  * https://github.com/ant-design/ant-design-pro-layout
  */
 import ProLayout, {BasicLayoutProps as ProLayoutProps, MenuDataItem, Settings,} from '@ant-design/pro-layout';
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import Link from 'umi/link';
 import {Dispatch} from 'redux';
 import {connect} from 'dva';
@@ -14,6 +14,7 @@ import RightContent from '@/components/GlobalHeader/RightContent';
 import {ConnectState} from '@/models/connect';
 import {getAuthorityFromRouter} from '@/utils/utils';
 import logo from '../assets/logo.svg';
+import {getRouter} from "@/pages/sys/menu/service";
 
 const noMatch = (
   <Result
@@ -46,11 +47,7 @@ export type BasicLayoutContext = { [K in 'location']: BasicLayoutProps[K] } & {
  * use Authorized check all menu item
  */
 
-const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] =>
-  menuList.map(item => {
-    const localItem = { ...item, children: item.children ? menuDataRender(item.children) : [] };
-    return Authorized.check(item.authority, localItem, null) as MenuDataItem;
-  });
+
 
 // const defaultFooterDom = (
 //   <DefaultFooter
@@ -128,6 +125,25 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
    * init variables
    */
 
+  const [menuData, setMenuData] = useState([]);
+
+  const menuDataRender = (menuList: MenuDataItem[]): MenuDataItem[] => {
+    return menuList.map(item => {
+      const localItem = { ...item, children: item.children ? menuDataRender(item.children) : [] };
+      return Authorized.check(item.authority, localItem, null) as MenuDataItem;
+    });
+  };
+
+
+  useEffect(() => {
+    // 这里是一个演示用法
+    // 真实项目中建议使用 dva dispatch 或者 umi-request
+    getRouter().then((response) => {
+      const router = response.data;
+      setMenuData(router);
+    });
+  }, []);
+
   const handleMenuCollapse = (payload: boolean): void => {
     if (dispatch) {
       dispatch({
@@ -173,7 +189,7 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
         );
       }}
       // footerRender={footerRender}
-      menuDataRender={menuDataRender}
+      menuDataRender={() => menuData}
       rightContentRender={rightProps => <RightContent {...rightProps} />}
       {...props}
       {...settings}

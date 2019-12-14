@@ -2,7 +2,7 @@ import {Form, Input, Modal, Select, Spin} from 'antd';
 
 import {FormComponentProps} from 'antd/es/form';
 import React from 'react';
-import {Role} from "@/pages/sys/role/data";
+import {SysRole} from "@/pages/sys/role/data";
 import {WrappedFormUtils} from "antd/lib/form/Form";
 
 const FormItem = Form.Item;
@@ -12,7 +12,7 @@ interface CreateFormProps extends FormComponentProps {
   modalVisible: boolean;
   handleAdd: (fieldsValue: any, form: WrappedFormUtils<any>) => void;
   handleModalVisible: () => void;
-  roles: Role[];
+  roles: SysRole[];
   loading: boolean;
 }
 
@@ -24,7 +24,7 @@ const CreateForm: React.FC<CreateFormProps> = props => {
       handleAdd(fieldsValue, form);
     });
   };
-  const options = roles.map(role => <Option key={role.code}>{role.name}</Option>);
+  const options = roles.map(role => <Option key={role.id}>{role.name}</Option>);
   return (
     <Modal
       destroyOnClose

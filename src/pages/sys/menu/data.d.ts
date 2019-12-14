@@ -3,3 +3,12 @@ export interface MenuTreeItem {
   children: MenuTreeItem[];
   label: string;
 }
+
+export interface SysMenu {
+  id?: string,
+  title: string;
+  url?: string;
+  authority?: string;
+  type: number;
+  parentId?: string;
+}

@@ -3,7 +3,7 @@ import {EffectsCommandMap} from 'dva';
 import {addUser, queryUser, removeUser, updateUser} from './service';
 
 import {TableListData} from './data.d';
-import {queryRoles} from "@/pages/sys/role/service";
+import { query as queryRoles} from "@/pages/sys/role/service";
 
 export interface StateType {
   data: TableListData;

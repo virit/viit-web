@@ -1,7 +1,7 @@
 import {AnyAction, Reducer} from "redux";
 import {EffectsCommandMap} from "dva";
 import {MenuTreeItem} from "@/pages/sys/menu/data";
-import {queryMenuInfo, queryTreeMenus} from "@/pages/sys/menu/service";
+import {deleteRecord, newMenu, queryMenuInfo, queryTreeMenus, updateMenu} from "@/pages/sys/menu/service";
 
 export interface StateType {
   data: {
@@ -21,10 +21,16 @@ export interface ModelType {
   effects: {
     fetchMenus: Effect;
     queryMenuInfo: Effect;
+    delete: Effect;
+    insert: Effect;
+    update: Effect;
   };
   reducers: {
     saveMenus: Reducer<StateType>;
     saveFormValues: Reducer<StateType>;
+    removeById: Reducer<StateType>;
+    insertOne: Reducer<StateType>;
+    updateOneTreeNode: Reducer<StateType>;
   };
 }
 
@@ -32,6 +38,7 @@ const initState:StateType = {
   data: {
     menuData: [],
     formValues: {
+      type: 10
     }
   }
 };
@@ -59,6 +66,34 @@ const Model:ModelType = {
       if (callback !== undefined) {
         callback();
       }
+    },
+    *delete({ payload, callback }, {call, put}) {
+      yield call(deleteRecord, payload);
+      yield put({
+        type: 'removeById',
+        payload,
+      });
+      if (callback) callback();
+    },
+    *insert({ payload, callback }, {call, put}) {
+      const response = yield call(newMenu, payload);
+      const newItem: MenuTreeItem = {
+        id: response.data.id,
+        label: payload.title,
+        children: [],
+      };
+      yield put({
+        type: 'insertOne',
+        payload: {
+          id: payload.parentId,
+          data: newItem,
+        },
+      });
+      if (callback) callback(response.data.id);
+    },
+    *update({ payload, callback }, {call, put}) {
+      yield call(updateMenu, payload);
+      if (callback) callback();
     }
   },
   reducers: {
@@ -69,7 +104,60 @@ const Model:ModelType = {
     },
     saveFormValues: (state, action) => {
       const newState:StateType = state === undefined ? {...initState} : {...state};
-      newState.data.formValues = action.payload;
+      newState.data.formValues = {
+        ...action.payload,
+      };
+      return newState;
+    },
+    removeById: (state, action) => {
+      const newState:StateType = state === undefined ? {...initState} : {...state};
+      const deleteFunc = (array: MenuTreeItem[]) => {
+        array.map(item => {
+          if (item.children === undefined) return;
+          item.children = deleteFunc(item.children);
+        });
+        return array.filter(it => it.id !== action.payload);
+      };
+      newState.data.menuData = deleteFunc(newState.data.menuData);
+      return newState;
+    },
+    insertOne: (state, action) => {
+      const newState:StateType = state === undefined ? {...initState} : {...state};
+      const { id, data } = action.payload;
+      const saveFunc = (array: MenuTreeItem[]) => {
+        array.forEach(item => {
+          if (item.id === id) {
+            item.children.push(data);
+            return;
+          }
+          if (item.children && item.children.length !== 0) {
+            saveFunc(item.children);
+          }
+        });
+      };
+      if (id === undefined) {
+        newState.data.menuData.push(data);
+      }
+      else {
+        saveFunc(newState.data.menuData);
+      }
+      return newState;
+    },
+    updateOneTreeNode: (state, action) => {
+      const newState:StateType = state === undefined ? {...initState} : {...state};
+      const { id, label } = action.payload;
+      const saveFunc = (array: MenuTreeItem[]) => {
+        array.forEach(item => {
+          if (item.id === id) {
+            item.label = label;
+            return;
+          }
+          if (item.children && item.children.length !== 0) {
+            saveFunc(item.children);
+          }
+        });
+      };
+      saveFunc(newState.data.menuData);
       return newState;
     },
   }
