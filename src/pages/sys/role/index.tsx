@@ -18,6 +18,8 @@ import UpdateForm from "./components/UpdateForm";
 import {HttpResponse} from "@/viit/model/types";
 import {SysRoleType} from "@/pages/sys/roleType/data";
 import AssignAuthorityModal from "@/pages/sys/role/components/AssignAuthorityModal";
+import AuthorityChecker from "@/viit/components/auth/AuthorityChecker";
+import AuthorityContainer from "@/viit/components/auth/AuthorityContainer";
 
 const FormItem = Form.Item;
 
@@ -26,7 +28,7 @@ type ActionType =
   'sysRole/insert' |
   'sysRole/delete' |
   'sysRole/get' |
-  'sysRole/update'|
+  'sysRole/update' |
   'sysRole/fetchRoleTypes' |
   'sysRole/fetchMenuTree';
 
@@ -69,6 +71,7 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
   interface UpdateModalState extends ModalState {
     fields: SysRole;
   }
+
   const [updateModalInfo, setUpdateModalInfo] = useState({
     loading: false,
     visible: false,
@@ -80,6 +83,7 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
     record: SysRole | {};
     loading: boolean;
   }
+
   const [assignModalState, setAssignModalState] = useState({
     visible: false,
     record: {},
@@ -265,7 +269,7 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
       type: 'sysRole/get',
       payload: id,
       callback: (response: HttpResponse) => {
-        const fieldsValue:SysRole = response.data;
+        const fieldsValue: SysRole = response.data;
         console.log(updateModalInfo);
         setUpdateModalInfo({
           visible: true,
@@ -306,7 +310,7 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
       loading: false,
     });
   };
-  const handleAssign = (id:string, menus:string[]) => {
+  const handleAssign = (id: string, menus: string[]) => {
 
     const newState = {
       ...assignModalState,
@@ -366,25 +370,33 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => {
-            handleClickUpdate(record.id);
-          }}>修改</a>
-          <Divider type="vertical"/>
-          <Popconfirm
-            title="确定删除此项数据吗?"
-            onConfirm={() => {
-              handleDelete(record.id);
-            }}
-            okText="是"
-            cancelText="否"
-          >
-            <a>删除</a>
-          </Popconfirm>
-          <Divider type="vertical"/>
-          <a onClick={(e) => {
-            e.preventDefault();
-            assignClickAssign(record);
-          }}>分配权限</a>
+          <AuthorityContainer>
+            <AuthorityChecker withAuthority="sys:role:update">
+              <a onClick={() => {
+                handleClickUpdate(record.id);
+              }}>修改</a>
+              <Divider type="vertical"/>
+            </AuthorityChecker>
+            <AuthorityChecker withAuthority="sys:role:delete">
+              <Popconfirm
+                title="确定删除此项数据吗?"
+                onConfirm={() => {
+                  handleDelete(record.id);
+                }}
+                okText="是"
+                cancelText="否"
+              >
+                <a>删除</a>
+              </Popconfirm>
+              <Divider type="vertical"/>
+            </AuthorityChecker>
+            <AuthorityChecker withAuthority="sys:role:update">
+              <a onClick={(e) => {
+                e.preventDefault();
+                assignClickAssign(record);
+              }}>分配权限</a>
+            </AuthorityChecker>
+          </AuthorityContainer>
         </Fragment>
       ),
     },
@@ -408,7 +420,7 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
           <Col md={12} lg={6} sm={24}>
             <FormItem label="角色类型">
               {getFieldDecorator('typeId')(
-                <Select style={{ width: '100%'}} placeholder="请选择" disabled={sysRole.data.roleTypes === undefined}>
+                <Select style={{width: '100%'}} placeholder="请选择" disabled={sysRole.data.roleTypes === undefined}>
                   {
                     (sysRole.data.roleTypes || [] as SysRoleType[]).map(it => {
                       return <Select.Option key={it.id}>{it.typeName}</Select.Option>;
@@ -439,14 +451,18 @@ const sysRoleComponent: React.FC<Props> = ({form, dispatch, sysRole}) => {
         <VTContainer>
           {searchForm}
           <MenuBar>
-            <Button icon="plus" type="primary" onClick={handleNewItem}>
-              新建
-            </Button>
-            {selectedRowKeys.length > 0 &&
-            <Button onClick={handleDeleteMany}>
-              删除
-            </Button>
-            }
+            <AuthorityChecker withAuthority="sys:role:add">
+              <Button icon="plus" type="primary" onClick={handleNewItem}>
+                新建
+              </Button>
+            </AuthorityChecker>
+            <AuthorityChecker withAuthority="sys:role:delete">
+              {selectedRowKeys.length > 0 &&
+              <Button onClick={handleDeleteMany}>
+                删除
+              </Button>
+              }
+            </AuthorityChecker>
           </MenuBar>
           <TableContainer>
             <TableInfo>

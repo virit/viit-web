@@ -96,14 +96,14 @@ export default {
           routes: [
             {
               path: '/',
-              redirect: '/sys/user',
+              redirect: '/welcome',
             },
-            // {
-            //   name: '分析页',
-            //   icon: 'smile',
-            //   path: '/dashboard',
-            //   component: './dashboard',
-            // },
+            {
+              name: '欢迎',
+              icon: 'smile',
+              path: '/welcome',
+              component: './Welcome',
+            },
             {
               path: '/admin',
               name: 'admin',

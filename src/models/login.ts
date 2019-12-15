@@ -1,7 +1,6 @@
 import {Reducer} from 'redux';
 import {routerRedux} from 'dva/router';
 import {Effect} from 'dva';
-import {stringify} from 'querystring';
 
 import {fakeAccountLogin, getFakeCaptcha, logOut} from '@/services/login';
 import {setAuthority} from '@/utils/authority';
@@ -75,9 +74,7 @@ const Model: LoginModelType = {
         yield put(
           routerRedux.replace({
             pathname: '/user/login',
-            search: stringify({
-              redirect: window.location.href,
-            }),
+
           }),
         );
       }

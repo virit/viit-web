@@ -16,6 +16,8 @@ import {Action, Dispatch} from "redux";
 import CreateForm from "./components/CreateForm";
 import UpdateForm from "./components/UpdateForm";
 import {HttpResponse} from "@/viit/model/types";
+import AuthorityChecker from "@/viit/components/auth/AuthorityChecker";
+import AuthorityContainer from "@/viit/components/auth/AuthorityContainer";
 
 const FormItem = Form.Item;
 
@@ -65,6 +67,7 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
   interface UpdateModalState extends ModalState {
     fields: SysRoleType;
   }
+
   const [updateModalInfo, setUpdateModalInfo] = useState({
     loading: false,
     visible: false,
@@ -243,7 +246,7 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
       type: 'sysRoleType/get',
       payload: id,
       callback: (response: HttpResponse) => {
-        const fieldsValue:SysRoleType = response.data;
+        const fieldsValue: SysRoleType = response.data;
         console.log(updateModalInfo);
         setUpdateModalInfo({
           visible: true,
@@ -297,20 +300,26 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
       title: '操作',
       render: (text, record) => (
         <Fragment>
-          <a onClick={() => {
-            handleClickUpdate(record.id);
-          }}>修改</a>
-          <Divider type="vertical"/>
-          <Popconfirm
-            title="确定删除此项数据吗?"
-            onConfirm={() => {
-              handleDelete(record.id);
-            }}
-            okText="是"
-            cancelText="否"
-          >
-            <a>删除</a>
-          </Popconfirm>
+          <AuthorityContainer>
+            <AuthorityChecker withAuthority="sys:role-type:update">
+              <a onClick={() => {
+                handleClickUpdate(record.id);
+              }}>修改</a>
+              <Divider type="vertical"/>
+            </AuthorityChecker>
+            <AuthorityChecker withAuthority="sys:role-type:delete">
+              <Popconfirm
+                title="确定删除此项数据吗?"
+                onConfirm={() => {
+                  handleDelete(record.id);
+                }}
+                okText="是"
+                cancelText="否"
+              >
+                <a>删除</a>
+              </Popconfirm>
+            </AuthorityChecker>
+          </AuthorityContainer>
         </Fragment>
       ),
     },
@@ -347,14 +356,18 @@ const SysRoleTypeComponent: React.FC<Props> = ({form, dispatch, sysRoleType}) =>
         <VTContainer>
           {searchForm}
           <MenuBar>
-            <Button icon="plus" type="primary" onClick={handleNewItem}>
-              新建
-            </Button>
-            {selectedRowKeys.length > 0 &&
-            <Button onClick={handleDeleteMany}>
-              删除
-            </Button>
-            }
+            <AuthorityChecker withAuthority="sys:role-type:add">
+              <Button icon="plus" type="primary" onClick={handleNewItem}>
+                新建
+              </Button>
+            </AuthorityChecker>
+            <AuthorityChecker withAuthority="sys:role-type:delete">
+              {selectedRowKeys.length > 0 &&
+              <Button onClick={handleDeleteMany}>
+                删除
+              </Button>
+              }
+            </AuthorityChecker>
           </MenuBar>
           <TableContainer>
             <TableInfo>

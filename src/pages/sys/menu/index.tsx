@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {PageHeaderWrapper} from "@ant-design/pro-layout";
-import {Button, Card, Col, Form, Input, Modal, Radio, Row, Spin, Tree} from "antd";
+import {Button, Card, Col, Form, Input, message, Modal, Radio, Row, Spin, Tree} from "antd";
 import {MenuTreeItem, SysMenu} from "@/pages/sys/menu/data";
 import {connect} from "dva";
 import {StateType} from "@/pages/sys/menu/model";
@@ -8,22 +8,19 @@ import {Action, Dispatch} from "redux";
 import {checkBreakPoint} from "@/utils/viit/GridBreakPoint";
 import DocumentSize from "@/utils/viit/DocumentSize";
 import {FormComponentProps} from "antd/es/form";
+import AuthorityChecker from "@/viit/components/auth/AuthorityChecker";
 
 const {TreeNode} = Tree;
 
 interface Props extends FormComponentProps {
   sysMenu: StateType;
-  dispatch: Dispatch<
-    Action<
-      | 'sysMenu/fetchMenus'
-      | 'sysMenu/queryMenuInfo'
-      | 'sysMenu/delete'
-      | 'sysMenu/saveFormValues'
-      | 'sysMenu/insert'
-      | 'sysMenu/update'
-      | 'sysMenu/updateOneTreeNode'
-      >
-    >;
+  dispatch: Dispatch<Action<| 'sysMenu/fetchMenus'
+    | 'sysMenu/queryMenuInfo'
+    | 'sysMenu/delete'
+    | 'sysMenu/saveFormValues'
+    | 'sysMenu/insert'
+    | 'sysMenu/update'
+    | 'sysMenu/updateOneTreeNode'>>;
 }
 
 type FormType = 0 | 1;
@@ -150,11 +147,12 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
           type: 'sysMenu/insert',
           payload: values,
           callback: (id: string) => {
-
             setInfoModal({
               ...infoModal,
-              loading: false
+              loading: false,
+              visible: false,
             });
+            message.success('添加成功！');
           }
         });
       } else if (formType === 1) {
@@ -173,8 +171,10 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
             });
             setInfoModal({
               ...infoModal,
-              loading: false
+              loading: false,
+              visible: false,
             });
+            message.success('修改成功！');
           }
         });
       }
@@ -227,12 +227,12 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
         formValues.type === 10 ? (
           <>
             <Form.Item label="页面路径" labelCol={{span: 5}} wrapperCol={{span: 19}}>
-            {form.getFieldDecorator('url', {
-              rules: [{required: true}],
-            })(
-              <Input/>
-            )}
-          </Form.Item>
+              {form.getFieldDecorator('url', {
+                rules: [{required: true}],
+              })(
+                <Input/>
+              )}
+            </Form.Item>
             <Form.Item label="图标" labelCol={{span: 5}} wrapperCol={{span: 19}}>
               {form.getFieldDecorator('icon', {
                 rules: [],
@@ -252,17 +252,19 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
         )
       }
       {checkBreakPoint(['xs', 'sm'], size.width) ? <></> :
-      <Form.Item labelCol={{span: 5}} wrapperCol={{span: 19, push: 5}}>
-        <Button type="primary" onClick={e => {
-          e.preventDefault();
-          handleSave();
-        }}>
-          {
-            formType === 0 ? '新增' : '修改'
-          }
-        </Button>
+        <AuthorityChecker withAuthority="ROLE_super">
+          <Form.Item labelCol={{span: 5}} wrapperCol={{span: 19, push: 5}}>
+            <Button type="primary" onClick={e => {
+              e.preventDefault();
+              handleSave();
+            }}>
+              {
+                formType === 0 ? '新增' : '修改'
+              }
+            </Button>
 
-      </Form.Item>
+          </Form.Item>
+        </AuthorityChecker>
       }
     </Spin>
   );
@@ -271,32 +273,34 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     <PageHeaderWrapper>
       <Card bordered={false}>
         <div style={{marginBottom: '16px'}}>
-          <Button
-            icon="plus"
-            type="primary"
-            style={{marginRight: '8px'}}
-            onClick={() => {
-              setFormType(0);
-              form.resetFields();
-              form.setFieldsValue({
-                type: SysMenuType.MENU,
-              });
-              dispatch({
-                type: 'sysMenu/saveFormValues',
-                payload: {
+          <AuthorityChecker withAuthority="ROLE_super">
+            <Button
+              icon="plus"
+              type="primary"
+              style={{marginRight: '8px'}}
+              onClick={() => {
+                setFormType(0);
+                form.resetFields();
+                form.setFieldsValue({
                   type: SysMenuType.MENU,
-                }
-              });
-            }}
-          >
-            新建
-          </Button>
-          {
-            selectedId &&
-            <Button onClick={handleDelete}>
-              删除
+                });
+                dispatch({
+                  type: 'sysMenu/saveFormValues',
+                  payload: {
+                    type: SysMenuType.MENU,
+                  }
+                });
+              }}
+            >
+              新建
             </Button>
-          }
+            {
+              selectedId &&
+              <Button onClick={handleDelete}>
+                删除
+              </Button>
+            }
+          </AuthorityChecker>
         </div>
         <Row>
           <Col xl={6} sm={8} xxl={6} md={8} xs={24}>
@@ -311,6 +315,10 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
               <Modal okButtonProps={{disabled: infoModal.loading}} visible={infoModal.visible}
                      title="菜单信息"
                      onCancel={() => setInfoModal({...infoModal, visible: false})}
+                     onOk={(e) => {
+                       e.preventDefault();
+                       handleSave();
+                     }}
               >
                 {infoForm}
               </Modal> : infoForm
