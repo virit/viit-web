@@ -27,7 +27,8 @@ type ActionType =
   'sysDict/insert' |
   'sysDict/delete' |
   'sysDict/get' |
-  'sysDict/update';
+  'sysDict/update' |
+  'sysDict/setPagination';
 
 interface Props extends FormComponentProps {
   dispatch: Dispatch<Action<ActionType>>;
@@ -44,10 +45,10 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
   // 搜索表单
   const [searchFormFields, setSearchFormFields] = useState({});
   // 分页信息
-  const [pageInfo, setPageInfo] = useState({
-    current: 1,
-    pageSize: 10,
-  });
+  // const [pageInfo, setPageInfo] = useState({
+  //   current: 1,
+  //   pageSize: 10,
+  // });
   // 选中行
   const rolKeys: string[] | number[] = [];
   const [selectedRowKeys, setSelectedRowKeys] = useState(rolKeys);
@@ -82,7 +83,7 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
       type: 'sysDict/fetch',
       payload: {
         page: {
-          ...pageInfo,
+          ...sysDict.data.pagination,
         }
       },
       callback: () => {
@@ -93,9 +94,12 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
   // 设置分页
   const onTableChange = (pagination: PaginationConfig) => {
     setLoading(true);
-    setPageInfo({
-      current: pagination.current || 1,
-      pageSize: pagination.pageSize || 10,
+    dispatch({
+      type: 'sysDict/setPagination',
+      payload: {
+        current: pagination.current || 1,
+        pageSize: pagination.pageSize || 10,
+      }
     });
     dispatch({
       type: 'sysDict/fetch',
@@ -121,17 +125,17 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
       setLoading(true);
       setSelectedRowKeys([]);
       setSearchFormFields({...fieldsValue});
-      const newPageInfo = {
-        ...pageInfo,
-        current: 1,
-      };
-      setPageInfo(newPageInfo);
-      console.log(fieldsValue);
+      dispatch({
+        type: 'sysDict/setPagination',
+        payload: {
+          current: 1,
+        }
+      });
       dispatch({
         type: 'sysDict/fetch',
         payload: {
           page: {
-            ...newPageInfo,
+            ...sysDict.data.pagination,
           },
           fields: {...fieldsValue}
         },
@@ -145,11 +149,14 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
     setSearchFormFields({});
     form.resetFields();
     const newPageInfo = {
-      ...pageInfo,
+      ...sysDict.data.pagination,
       current: 1,
     };
     setLoading(true);
-    setPageInfo(newPageInfo);
+    dispatch({
+      type: 'sysDict/setPagination',
+      payload: newPageInfo,
+    });
     dispatch({
       type: 'sysDict/fetch',
       payload: {
@@ -183,12 +190,15 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
         });
         message.success('添加成功！');
         const newPageInfo = {
-          ...pageInfo,
+          ...sysDict.data.pagination,
           current: 1,
         };
         setSelectedRowKeys([]);
         setSearchFormFields({});
-        setPageInfo(newPageInfo);
+        dispatch({
+          type: 'sysDict/setPagination',
+          payload: newPageInfo,
+        });
         const query = {
           page: {
             ...newPageInfo,
@@ -212,7 +222,7 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
       payload: id,
       query: {
         page: {
-          ...pageInfo,
+          ...sysDict.data.pagination,
         },
         fields: {
           ...searchFormFields,
@@ -412,7 +422,6 @@ const SysDictComponent: React.FC<Props> = ({form, dispatch, sysDict}) => {
               pagination={{
                 showQuickJumper: true,
                 showSizeChanger: true,
-                ...pageInfo,
                 ...sysDict.data.pagination,
                 showTotal: (total, range) => `第${range[0]}-${range[1]}条，共${total}条`
               }}

@@ -160,6 +160,25 @@ export default {
                 // },
               ],
             },
+            {
+              name: '组织机构',
+              icon: 'team',
+              path: '/orga',
+              routes: [
+                {
+                  name: '部门管理',
+                  icon: 'apartment',
+                  path: '/orga/department',
+                  component: './orga/department',
+                },
+                {
+                  name: '员工信息',
+                  icon: 'user',
+                  path: '/orga/staff',
+                  component: './orga/staff',
+                },
+              ]
+            },
             // {
             //   name: '个人设置',
             //   icon: 'smile',
@@ -230,7 +249,7 @@ export default {
   // chainWebpack: webpackPlugin,
   proxy: {
     '/api': {
-      target: 'http://127.0.0.1:8088/',
+      target: 'http://127.0.0.1:8080/',
       changeOrigin: true,
       pathRewrite: {
         '^/server': '',

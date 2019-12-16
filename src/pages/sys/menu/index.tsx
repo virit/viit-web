@@ -9,6 +9,7 @@ import {checkBreakPoint} from "@/utils/viit/GridBreakPoint";
 import DocumentSize from "@/utils/viit/DocumentSize";
 import {FormComponentProps} from "antd/es/form";
 import AuthorityChecker from "@/viit/components/auth/AuthorityChecker";
+import {saveOrder} from "@/pages/sys/menu/service";
 
 const {TreeNode} = Tree;
 
@@ -18,7 +19,9 @@ type ActionType = 'sysMenu/fetchMenus'
   | 'sysMenu/saveFormValues'
   | 'sysMenu/insert'
   | 'sysMenu/update'
-  | 'sysMenu/updateOneTreeNode';
+  | 'sysMenu/updateOneTreeNode'
+  | 'sysMenu/saveOrder'
+  | 'sysMenu/saveMenus';
 
 interface Props extends FormComponentProps {
   sysMenu: StateType;
@@ -42,6 +45,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     commitAble: false,
   });
   const [formType, setFormType] = useState(0 as FormType);
+  const [edited, setEdited] = useState(false);
   const size = DocumentSize();
   const formValues = sysMenu.data.formValues;
 
@@ -186,6 +190,15 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     });
   };
 
+  const handleSaveOrder = () => {
+    setLoading(true);
+    saveOrder(sysMenu.data.menuData).then((resp) => {
+      setLoading(false);
+      setEdited(false);
+      message.success('保存成功！');
+    });
+  };
+
   const renderTreeNodes: any = (data: MenuTreeItem[]) => {
     return data.map(item => {
       if (item.children) {
@@ -205,14 +218,14 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
         {form.getFieldDecorator('title', {
           rules: [{required: true, message: '菜单名称不能为空且最长为16个字符！', max: 16}],
         })(
-          <Input/>
+          <Input readOnly={!infoModal.commitAble} />
         )}
       </Form.Item>
       <Form.Item label="菜单类型" labelCol={{span: 5}} wrapperCol={{span: 19}}>
         {form.getFieldDecorator('type', {
           rules: [{required: true, message: '菜单类型必填！',}],
         })(
-          <Radio.Group onChange={e => {
+          <Radio.Group disabled={!infoModal.commitAble} onChange={e => {
             const value = e.target.value;
             dispatch({
               type: 'sysMenu/saveFormValues',
@@ -234,14 +247,14 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
               {form.getFieldDecorator('url', {
                 rules: [{required: true}],
               })(
-                <Input/>
+                <Input readOnly={!infoModal.commitAble} />
               )}
             </Form.Item>
             <Form.Item label="隐藏菜单" labelCol={{span: 5}} wrapperCol={{span: 19}}>
               {form.getFieldDecorator('hide', {
                 rules: [{required: false}],
               })(
-                <Checkbox checked={sysMenu.data.formValues.hide !== 0} onChange={(e) => {
+                <Checkbox disabled={!infoModal.commitAble} checked={sysMenu.data.formValues.hide !== 0} onChange={(e) => {
                   dispatch({
                     type: 'sysMenu/saveFormValues',
                     payload: {
@@ -256,7 +269,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
               {form.getFieldDecorator('icon', {
                 rules: [],
               })(
-                <Input/>
+                <Input readOnly={!infoModal.commitAble} />
               )}
             </Form.Item>
           </>
@@ -265,7 +278,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
             {form.getFieldDecorator('authority', {
               rules: [{required: true}],
             })(
-              <Input/>
+              <Input readOnly={!infoModal.commitAble} />
             )}
           </Form.Item>
         )
@@ -304,6 +317,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
               icon="plus"
               type="primary"
               style={{marginRight: '8px'}}
+              disabled={loading}
               onClick={() => {
                 setFormType(0);
                 setInfoModal({
@@ -326,8 +340,14 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
             </Button>
             {
               selectedId &&
-              <Button onClick={handleDelete}>
+              <Button onClick={handleDelete} style={{ marginRight: '8px'}}>
                 删除
+              </Button>
+            }
+            {
+              edited &&
+              <Button onClick={handleSaveOrder} disabled={loading}>
+                保存排序
               </Button>
             }
           </AuthorityChecker>
@@ -335,7 +355,18 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
         <Row>
           <Col xl={6} sm={8} xxl={6} md={8} xs={24}>
             <Spin spinning={loading}>
-              <Tree draggable onSelect={onClickNode} autoExpandParent>
+              <Tree draggable={infoModal.commitAble} onSelect={onClickNode} onDrop={(e) => {
+                setEdited(true);
+                dispatch({
+                  type: 'sysMenu/saveOrder',
+                  payload: {
+                    dragNodeId: e.dragNode.props.eventKey,
+                    nodeId: e.node.props.eventKey,
+                    pos: e.dropPosition,
+                    dropToGap: e.dropToGap,
+                  }
+                });
+              }}>
                 {renderTreeNodes(sysMenu.data.menuData)}
               </Tree>
             </Spin>

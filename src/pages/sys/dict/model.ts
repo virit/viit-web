@@ -14,6 +14,8 @@ export interface StateType {
     list: SysDict[];
     pagination: {
       total: number;
+      current: number;
+      pageSize: number;
     }
   }
 }
@@ -31,6 +33,7 @@ export interface ModelType {
   reducers: {
     saveList: Reducer<StateType>;
     saveOneItem: Reducer<StateType>;
+    setPagination: Reducer<StateType>;
   }
 }
 
@@ -40,6 +43,8 @@ const initState:StateType = {
     list: [],
     pagination: {
       total: 0,
+      current: 1,
+      pageSize: 10,
     },
   },
 };
@@ -89,6 +94,17 @@ const Model: ModelType = {
     }
   },
   reducers: {
+    setPagination(state, { payload }) {
+      if (state === undefined) {
+        return {...initState};
+      }
+      const newState = {...state};
+      newState.data.pagination = {
+        ...newState.data.pagination,
+        ...payload,
+      };
+      return newState;
+    },
     saveList(state, { payload }) {
       if (state === undefined) {
         return {...initState};

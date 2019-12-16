@@ -31,6 +31,7 @@ export interface ModelType {
     removeById: Reducer<StateType>;
     insertOne: Reducer<StateType>;
     updateOneTreeNode: Reducer<StateType>;
+    saveOrder: Reducer<StateType>;
   };
 }
 
@@ -159,6 +160,59 @@ const Model:ModelType = {
         });
       };
       saveFunc(newState.data.menuData);
+      return newState;
+    },
+    saveOrder: (state, action) => {
+      const newState:StateType = state === undefined ? {...initState} : {...state};
+      const { dragNodeId, nodeId, pos, dropToGap } = action.payload;
+      const menuData = newState.data.menuData;
+
+      type ResultType = {
+        node: MenuTreeItem,
+        items: MenuTreeItem[],
+        parent: MenuTreeItem | undefined,
+      };
+      const findFunction:(items: MenuTreeItem[], id: string, parent: (MenuTreeItem | undefined)) => (ResultType)
+        = (items, id, parent = undefined) => {
+
+        const afterFilter = items.filter(it => it.id === id);
+        if (afterFilter.length !== 0) {
+          return {
+            node: afterFilter[0],
+            items,
+            parent: parent,
+          } as ResultType;
+        } else {
+          for (let index in items) {
+            const item = items[index];
+            if (item.children && item.children.length !== 0) {
+              const result = findFunction(item.children, id, item);
+              if (result.node !== undefined) {
+                return result;
+              }
+            }
+          }
+        }
+        return {} as ResultType;
+      };
+      const dragNodeResult = findFunction(menuData, dragNodeId, undefined);
+
+      const nodeResult = findFunction(menuData, nodeId, undefined);
+      if (dropToGap) {
+        nodeResult.items.splice(pos + 1, 0, {...dragNodeResult.node});
+      } else {
+        nodeResult.node.children.push({...dragNodeResult.node});
+      }
+
+      const doFilter = dragNodeResult.items.filter(it => {
+        return dragNodeResult.node !== it;
+      });
+      if (dragNodeResult.parent !== undefined) {
+        dragNodeResult.parent.children = doFilter;
+      } else {
+        newState.data.menuData = doFilter
+      }
+
       return newState;
     },
   }

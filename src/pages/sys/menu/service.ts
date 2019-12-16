@@ -1,5 +1,5 @@
 import request from "@/utils/request";
-import {SysMenu} from "@/pages/sys/menu/data";
+import {MenuTreeItem, SysMenu} from "@/pages/sys/menu/data";
 
 const resourceName = '/sys/menu';
 
@@ -33,4 +33,11 @@ export async function updateMenu(record: SysMenu) {
 
 export async function getRouter() {
   return request(`${resourceName}/router/antd`);
+}
+
+export async function saveOrder(menus: MenuTreeItem[]) {
+  return request(`${resourceName}/tree/order`, {
+    method: 'put',
+    data: menus,
+  });
 }
