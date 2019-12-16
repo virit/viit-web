@@ -8,9 +8,10 @@ interface CheckProps {
       grantedAuthorities: string[];
     };
   };
+  resultCallback: (result: boolean) => void;
 }
 
-const AuthorityChecker:React.FC<CheckProps> = ({withAuthority, children, user }) => {
+const AuthorityChecker:React.FC<CheckProps> = ({withAuthority, children, user, resultCallback }) => {
 
   const authorities = user.currentUser.grantedAuthorities;
   const normalizeWithAuthorities = withAuthority === undefined ? []
@@ -24,7 +25,10 @@ const AuthorityChecker:React.FC<CheckProps> = ({withAuthority, children, user })
     return true;
   };
 
-  if (authorities.indexOf('ROLE_super') !== -1 || checkFunction(authorities, normalizeWithAuthorities)) {
+  const result = checkFunction(authorities, normalizeWithAuthorities);
+  if (resultCallback) resultCallback(result);
+
+  if (authorities.indexOf('ROLE_super') !== -1 || result) {
     return <>{children}</>;
   }
   return <></>;

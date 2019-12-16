@@ -140,6 +140,18 @@ export default {
                   path: '/sys/role',
                   component: './sys/role',
                 },
+                {
+                  name: '数据字典',
+                  icon: 'smile',
+                  path: '/sys/dict',
+                  component: './sys/dict',
+                },
+                {
+                  name: '数据字典配置',
+                  path: '/sys/dict/:id',
+                  hideInMenu: true,
+                  component: './sys/dictItem',
+                },
                 // {
                 //   name: '角色管理',
                 //   icon: 'smile',
@@ -218,7 +230,7 @@ export default {
   // chainWebpack: webpackPlugin,
   proxy: {
     '/api': {
-      target: 'http://127.0.0.1:8080/',
+      target: 'http://127.0.0.1:8088/',
       changeOrigin: true,
       pathRewrite: {
         '^/server': '',

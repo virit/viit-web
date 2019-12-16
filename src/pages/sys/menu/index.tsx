@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {PageHeaderWrapper} from "@ant-design/pro-layout";
-import {Button, Card, Col, Form, Input, message, Modal, Radio, Row, Spin, Tree} from "antd";
+import {Button, Card, Checkbox, Col, Form, Input, message, Modal, Radio, Row, Spin, Tree} from "antd";
 import {MenuTreeItem, SysMenu} from "@/pages/sys/menu/data";
 import {connect} from "dva";
 import {StateType} from "@/pages/sys/menu/model";
@@ -12,15 +12,17 @@ import AuthorityChecker from "@/viit/components/auth/AuthorityChecker";
 
 const {TreeNode} = Tree;
 
+type ActionType = 'sysMenu/fetchMenus'
+  | 'sysMenu/queryMenuInfo'
+  | 'sysMenu/delete'
+  | 'sysMenu/saveFormValues'
+  | 'sysMenu/insert'
+  | 'sysMenu/update'
+  | 'sysMenu/updateOneTreeNode';
+
 interface Props extends FormComponentProps {
   sysMenu: StateType;
-  dispatch: Dispatch<Action<| 'sysMenu/fetchMenus'
-    | 'sysMenu/queryMenuInfo'
-    | 'sysMenu/delete'
-    | 'sysMenu/saveFormValues'
-    | 'sysMenu/insert'
-    | 'sysMenu/update'
-    | 'sysMenu/updateOneTreeNode'>>;
+  dispatch: Dispatch<Action<ActionType>>;
 }
 
 type FormType = 0 | 1;
@@ -37,6 +39,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
   const [infoModal, setInfoModal] = useState({
     visible: false,
     loading: false,
+    commitAble: false,
   });
   const [formType, setFormType] = useState(0 as FormType);
   const size = DocumentSize();
@@ -64,6 +67,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     if (formValues.type === SysMenuType.MENU) {
       values['url'] = formValues.url;
       values['icon'] = formValues.icon;
+      values['hide'] = formValues.hide;
     } else if (formValues.type === SysMenuType.BUTTON) {
       values['authority'] = formValues.authority;
     }
@@ -74,12 +78,12 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     if (id !== undefined) {
       setFormType(1);
       setSelectedId(id);
-      setInfoModal({visible: true, loading: true});
+      setInfoModal({...infoModal, visible: true, loading: true});
       dispatch({
         type: 'sysMenu/queryMenuInfo',
         payload: id,
         callback: function () {
-          setInfoModal({visible: true, loading: false});
+          setInfoModal({...infoModal, visible: true, loading: false});
         }
       });
     } else {
@@ -140,6 +144,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
         ...infoModal,
         loading: true
       });
+      values.hide = formValues.hide;
       if (formType === 0) {
         // 新增
         values.parentId = selectedId;
@@ -203,7 +208,6 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
           <Input/>
         )}
       </Form.Item>
-
       <Form.Item label="菜单类型" labelCol={{span: 5}} wrapperCol={{span: 19}}>
         {form.getFieldDecorator('type', {
           rules: [{required: true, message: '菜单类型必填！',}],
@@ -231,6 +235,21 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
                 rules: [{required: true}],
               })(
                 <Input/>
+              )}
+            </Form.Item>
+            <Form.Item label="隐藏菜单" labelCol={{span: 5}} wrapperCol={{span: 19}}>
+              {form.getFieldDecorator('hide', {
+                rules: [{required: false}],
+              })(
+                <Checkbox checked={sysMenu.data.formValues.hide !== 0} onChange={(e) => {
+                  dispatch({
+                    type: 'sysMenu/saveFormValues',
+                    payload: {
+                      ...sysMenu.data.formValues,
+                      hide: e.target.checked ? 1 : 0,
+                    }
+                  });
+                }} />
               )}
             </Form.Item>
             <Form.Item label="图标" labelCol={{span: 5}} wrapperCol={{span: 19}}>
@@ -273,13 +292,24 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
     <PageHeaderWrapper>
       <Card bordered={false}>
         <div style={{marginBottom: '16px'}}>
-          <AuthorityChecker withAuthority="ROLE_super">
+          <AuthorityChecker withAuthority="ROLE_super" resultCallback={(result:boolean) => {
+            if (result !== infoModal.commitAble) {
+              setInfoModal({
+                ...infoModal,
+                commitAble: result,
+              });
+            }
+          }}>
             <Button
               icon="plus"
               type="primary"
               style={{marginRight: '8px'}}
               onClick={() => {
                 setFormType(0);
+                setInfoModal({
+                  ...infoModal,
+                  visible: true,
+                });
                 form.resetFields();
                 form.setFieldsValue({
                   type: SysMenuType.MENU,
@@ -312,7 +342,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
           </Col>
           <Col xl={12} sm={16} xxl={8} md={16} xs={24}>
             {checkBreakPoint(['xs', 'sm'], size.width) ?
-              <Modal okButtonProps={{disabled: infoModal.loading}} visible={infoModal.visible}
+              <Modal okButtonProps={{disabled: infoModal.loading || !infoModal.commitAble}} visible={infoModal.visible}
                      title="菜单信息"
                      onCancel={() => setInfoModal({...infoModal, visible: false})}
                      onOk={(e) => {

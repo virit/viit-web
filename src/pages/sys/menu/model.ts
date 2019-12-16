@@ -38,9 +38,10 @@ const initState:StateType = {
   data: {
     menuData: [],
     formValues: {
-      type: 10
-    }
-  }
+      type: 10,
+      hide: 0,
+    },
+  },
 };
 
 const Model:ModelType = {
