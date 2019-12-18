@@ -33,3 +33,7 @@ export async function updateDictItem(params: SysDictItemForm) {
     data: params,
   });
 }
+// 获取字典项
+export async function getDictItems(code: string) {
+  return request(`${resourceName}/code/${code}`);
+}

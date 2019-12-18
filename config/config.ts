@@ -112,6 +112,19 @@ export default {
               authority: ['admin'],
             },
             {
+              name: '个人中心',
+              icon: 'smile',
+              path: '/my',
+              routes: [
+                {
+                  name: '个人设置',
+                  icon: 'smile',
+                  path: '/my/account-settings',
+                  component: './my/AccountSettings',
+                },
+              ],
+            },
+            {
               name: '系统设置',
               icon: 'smile',
               path: '/sys',
@@ -152,12 +165,6 @@ export default {
                   hideInMenu: true,
                   component: './sys/dictItem',
                 },
-                // {
-                //   name: '角色管理',
-                //   icon: 'smile',
-                //   path: '/sys/role',
-                //   component: './sys/role',
-                // },
               ],
             },
             {
@@ -177,14 +184,14 @@ export default {
                   path: '/orga/staff',
                   component: './orga/staff',
                 },
-              ]
+              ],
             },
-            // {
-            //   name: '个人设置',
-            //   icon: 'smile',
-            //   path: '/accountsettings',
-            //   component: './AccountSettings',
-            // },
+            {
+              name: '个人设置',
+              icon: 'smile',
+              path: '/my/accountsettings',
+              component: './my/accountsettings',
+            },
             {
               component: './404',
             },

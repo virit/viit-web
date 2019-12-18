@@ -192,7 +192,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
 
   const handleSaveOrder = () => {
     setLoading(true);
-    saveOrder(sysMenu.data.menuData).then((resp) => {
+    saveOrder(sysMenu.data.treeData).then((resp) => {
       setLoading(false);
       setEdited(false);
       message.success('保存成功！');
@@ -332,6 +332,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
                   type: 'sysMenu/saveFormValues',
                   payload: {
                     type: SysMenuType.MENU,
+                    hide: 0,
                   }
                 });
               }}
@@ -367,7 +368,7 @@ const SysMenuComponent: React.FC<Props> = ({sysMenu, dispatch, form}) => {
                   }
                 });
               }}>
-                {renderTreeNodes(sysMenu.data.menuData)}
+                {renderTreeNodes(sysMenu.data.treeData)}
               </Tree>
             </Spin>
           </Col>

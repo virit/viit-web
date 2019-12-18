@@ -1,11 +1,11 @@
 import {AnyAction, Reducer} from "redux";
 import {EffectsCommandMap} from "dva";
-import {MenuTreeItem} from "@/pages/sys/menu/data";
-import {deleteRecord, newMenu, queryMenuInfo, queryTreeMenus, updateMenu} from "@/pages/sys/menu/service";
+import {DeptTreeItem} from "./data";
+import {deleteRecord, createNewItem, queryInfo, queryTree, update} from "./service";
 
 export interface StateType {
   data: {
-    treeData: MenuTreeItem[],
+    treeData: DeptTreeItem[],
     formValues: any,
   }
 }
@@ -19,14 +19,14 @@ export interface ModelType {
   namespace: string;
   state: StateType;
   effects: {
-    fetchMenus: Effect;
-    queryMenuInfo: Effect;
+    fetchTree: Effect;
+    queryInfo: Effect;
     delete: Effect;
     insert: Effect;
     update: Effect;
   };
   reducers: {
-    saveMenus: Reducer<StateType>;
+    save: Reducer<StateType>;
     saveFormValues: Reducer<StateType>;
     removeById: Reducer<StateType>;
     insertOne: Reducer<StateType>;
@@ -39,28 +39,26 @@ const initState:StateType = {
   data: {
     treeData: [],
     formValues: {
-      type: 10,
-      hide: 0,
     },
   },
 };
 
 const Model:ModelType = {
-  namespace: 'sysMenu',
+  namespace: 'orgaDept',
   state: initState,
   effects: {
-    *fetchMenus ({ payload, callback }, {call, put}) {
-      const response = yield call(queryTreeMenus);
+    *fetchTree ({ payload, callback }, {call, put}) {
+      const response = yield call(queryTree);
       yield put({
-        type: 'saveMenus',
+        type: 'save',
         payload: response.data,
       });
       if (callback !== undefined) {
         callback();
       }
     },
-    *queryMenuInfo ({ payload, callback }, {call, put}) {
-      const response = yield call(queryMenuInfo, payload);
+    *queryInfo ({ payload, callback }, {call, put}) {
+      const response = yield call(queryInfo, payload);
       yield put({
         type: 'saveFormValues',
         payload: {...response.data},
@@ -78,10 +76,10 @@ const Model:ModelType = {
       if (callback) callback();
     },
     *insert({ payload, callback }, {call, put}) {
-      const response = yield call(newMenu, payload);
-      const newItem: MenuTreeItem = {
+      const response = yield call(createNewItem, payload);
+      const newItem: DeptTreeItem = {
         id: response.data.id,
-        label: payload.title,
+        label: payload.name,
         children: [],
       };
       yield put({
@@ -94,12 +92,12 @@ const Model:ModelType = {
       if (callback) callback(response.data.id);
     },
     *update({ payload, callback }, {call, put}) {
-      yield call(updateMenu, payload);
+      yield call(update, payload);
       if (callback) callback();
     }
   },
   reducers: {
-    saveMenus: (state, action) => {
+    save: (state, action) => {
       const newState:StateType = state === undefined ? {...initState} : {...state};
       newState.data.treeData = action.payload;
       return newState;
@@ -113,7 +111,7 @@ const Model:ModelType = {
     },
     removeById: (state, action) => {
       const newState:StateType = state === undefined ? {...initState} : {...state};
-      const deleteFunc = (array: MenuTreeItem[]) => {
+      const deleteFunc = (array: DeptTreeItem[]) => {
         array.map(item => {
           if (item.children === undefined) return;
           item.children = deleteFunc(item.children);
@@ -126,7 +124,7 @@ const Model:ModelType = {
     insertOne: (state, action) => {
       const newState:StateType = state === undefined ? {...initState} : {...state};
       const { id, data } = action.payload;
-      const saveFunc = (array: MenuTreeItem[]) => {
+      const saveFunc = (array: DeptTreeItem[]) => {
         array.forEach(item => {
           if (item.id === id) {
             item.children.push(data);
@@ -148,7 +146,7 @@ const Model:ModelType = {
     updateOneTreeNode: (state, action) => {
       const newState:StateType = state === undefined ? {...initState} : {...state};
       const { id, label } = action.payload;
-      const saveFunc = (array: MenuTreeItem[]) => {
+      const saveFunc = (array: DeptTreeItem[]) => {
         array.forEach(item => {
           if (item.id === id) {
             item.label = label;
@@ -168,11 +166,11 @@ const Model:ModelType = {
       const menuData = newState.data.treeData;
 
       type ResultType = {
-        node: MenuTreeItem,
-        items: MenuTreeItem[],
-        parent: MenuTreeItem | undefined,
+        node: DeptTreeItem,
+        items: DeptTreeItem[],
+        parent: DeptTreeItem | undefined,
       };
-      const findFunction:(items: MenuTreeItem[], id: string, parent: (MenuTreeItem | undefined)) => (ResultType)
+      const findFunction:(items: DeptTreeItem[], id: string, parent: (DeptTreeItem | undefined)) => (ResultType)
         = (items, id, parent = undefined) => {
 
         const afterFilter = items.filter(it => it.id === id);
