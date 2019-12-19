@@ -116,12 +116,12 @@ export default {
               icon: 'smile',
               path: '/my',
               routes: [
-                {
-                  name: '个人设置',
-                  icon: 'smile',
-                  path: '/my/account-settings',
-                  component: './my/AccountSettings',
-                },
+                // {
+                //   name: '个人设置',
+                //   icon: 'smile',
+                //   path: '/my/account-settings',
+                //   component: './my/AccountSettings',
+                // },
               ],
             },
             {
@@ -187,10 +187,17 @@ export default {
               ],
             },
             {
-              name: '个人设置',
-              icon: 'smile',
-              path: '/my/accountsettings',
-              component: './my/accountsettings',
+              name: '流程管理',
+              icon: 'team',
+              path: '/bpmf',
+              routes: [
+                {
+                  name: '流程编辑器',
+                  icon: 'smile',
+                  path: '/bpmf/editor',
+                  component: './bpmf/Editor',
+                },
+              ],
             },
             {
               component: './404',
@@ -256,7 +263,7 @@ export default {
   // chainWebpack: webpackPlugin,
   proxy: {
     '/api': {
-      target: 'http://127.0.0.1:8080/',
+      target: 'http://47.101.155.230:8080/',
       changeOrigin: true,
       pathRewrite: {
         '^/server': '',
