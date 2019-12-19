@@ -28,6 +28,7 @@ interface DetailFormProps extends FormComponentProps {
 const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
 
   const item = propsAPI.getSelected()[0];
+  const model = item.getModel();
   const {getSelected, executeCommand, update} = propsAPI;
   if (!item) {
     return null;
@@ -49,6 +50,7 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
         if (!item) {
           return;
         }
+        values['label'] = values['name'];
         executeCommand(() => {
           update(item, {
             ...values,
@@ -67,13 +69,12 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
   );
 
   const renderNodeDetail = () => {
-    const {label} = item.getModel();
 
     return (
       <>
         <Item label="任务名称" {...inlineFormItemLayout}>
           {form.getFieldDecorator('name', {
-            initialValue: label,
+            initialValue: model.name,
           })(<Input onBlur={handleSubmit}/>)}
         </Item>
         <Item label="表单" {...inlineFormItemLayout}>
@@ -128,7 +129,7 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
   return (
     <Card type="inner" size="small" title={upperFirst(type)} bordered={false}>
       <Form onSubmit={handleSubmit}>
-        {type === 'node' && renderNodeDetail()}
+        {model.type === 'task' && renderNodeDetail()}
         {type === 'edge' && renderEdgeDetail()}
         {type === 'group' && renderGroupDetail()}
       </Form>

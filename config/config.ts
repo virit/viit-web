@@ -116,12 +116,12 @@ export default {
               icon: 'smile',
               path: '/my',
               routes: [
-                // {
-                //   name: '个人设置',
-                //   icon: 'smile',
-                //   path: '/my/account-settings',
-                //   component: './my/AccountSettings',
-                // },
+                {
+                  name: '个人设置',
+                  icon: 'smile',
+                  path: '/my/account-settings',
+                  component: './my/AccountSettings',
+                },
               ],
             },
             {

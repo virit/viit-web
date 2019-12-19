@@ -1,22 +1,30 @@
-import { Divider } from 'antd';
+import {Divider, Icon, Tooltip} from 'antd';
 import React from 'react';
-import { Toolbar } from 'gg-editor';
+import {Toolbar} from 'gg-editor';
 import ToolbarButton from './ToolbarButton';
 import styles from './index.less';
 
 const FlowToolbar = () => (
-  <Toolbar className={styles.toolbar}>
-    <ToolbarButton command="undo" />
-    <ToolbarButton command="redo" />
+  <Toolbar className={styles.toolbar} style={{paddingLeft: '8px'}}>
+    <Tooltip
+      title="保存"
+      placement="bottom"
+      overlayClassName={styles.tooltip}
+    >
+      <Icon type="save" />
+    </Tooltip>
     <Divider type="vertical" />
-    <ToolbarButton command="copy" />
-    <ToolbarButton command="paste" />
-    <ToolbarButton command="delete" />
+    <ToolbarButton command="undo" text="撤销" />
+    <ToolbarButton command="redo" text="重做" />
     <Divider type="vertical" />
-    <ToolbarButton command="zoomIn" icon="zoom-in" text="Zoom In" />
-    <ToolbarButton command="zoomOut" icon="zoom-out" text="Zoom Out" />
-    <ToolbarButton command="autoZoom" icon="fit-map" text="Fit Map" />
-    <ToolbarButton command="resetZoom" icon="actual-size" text="Actual Size" />
+    <ToolbarButton command="copy" text="复制" />
+    <ToolbarButton command="paste" text="粘贴" />
+    <ToolbarButton command="delete" text="删除" />
+    <Divider type="vertical" />
+    <ToolbarButton command="zoomIn" icon="zoom-in" text="放大" />
+    <ToolbarButton command="zoomOut" icon="zoom-out" text="缩小" />
+    <ToolbarButton command="autoZoom" icon="fit-map" text="自适应" />
+    <ToolbarButton command="resetZoom" icon="actual-size" text="实际大小" />
     <Divider type="vertical" />
     <ToolbarButton command="toBack" icon="to-back" text="To Back" />
     <ToolbarButton command="toFront" icon="to-front" text="To Front" />
