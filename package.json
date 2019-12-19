@@ -50,6 +50,7 @@
     "bizcharts-plugin-slider": "^2.1.1-beta.1",
     "classnames": "^2.2.6",
     "dva": "^2.4.1",
+    "gg-editor": "^2.0.2",
     "lodash": "^4.17.11",
     "lodash.debounce": "^4.0.8",
     "moment": "^2.24.0",
