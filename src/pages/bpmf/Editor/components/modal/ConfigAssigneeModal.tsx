@@ -19,7 +19,6 @@ const ConfigAssigneeModal:React.FC<Props> = ({ visible, handleCancel }) => {
     e.preventDefault();
     const newDataSource = [...dataSource];
     newDataSource.push({} as Assignee);
-    console.log(newDataSource);
     setDataSource(newDataSource)
   };
 

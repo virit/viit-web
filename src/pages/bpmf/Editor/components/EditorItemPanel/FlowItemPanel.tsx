@@ -28,6 +28,7 @@ const FlowItemPanel = () => (
         model={{
           color: '#FA8C16',
           label: '结束',
+          type: 'end',
           name: '结束',
         }}
         src={endSvg}
