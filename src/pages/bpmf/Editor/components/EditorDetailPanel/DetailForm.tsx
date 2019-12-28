@@ -4,10 +4,11 @@ import React, {useState} from 'react';
 import {FormComponentProps} from 'antd/es/form';
 import ConfigAssigneeModal from "@/pages/bpmf/Editor/components/modal/ConfigAssigneeModal";
 import {withPropsAPI} from "gg-editor";
-import ConfigListenerModal from "@/pages/bpmf/Editor/components/modal/ConfigListenerModal";
-
-const upperFirst = (str: string) =>
-  str.toLowerCase().replace(/( |^)[a-z]/g, (l: string) => l.toUpperCase());
+import ConfigListenerModal, {
+  EventType,
+  ListenerData,
+  ListenerType
+} from "@/pages/bpmf/Editor/components/modal/ConfigListenerModal";
 
 const {Item} = Form;
 const {Option} = Select;
@@ -26,6 +27,7 @@ interface DetailFormProps extends FormComponentProps {
   propsAPI?: any;
 }
 
+
 const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
 
   const item = propsAPI.getSelected()[0];
@@ -37,6 +39,42 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
 
   const [assigneeModalState, setAssigneeModalState] = useState({visible: false});
   const [configListenerState, setConfigListenerState] = useState({visible: false});
+  const [executionListenerData, setExecutionListenerData] =
+    useState(item.getModel().executionListenerData as ListenerData[]);
+  const [taskListenerData, setTaskListenerData] =
+    useState(item.getModel().taskListenerData as ListenerData[]);
+
+  const executionEvents = [
+    {
+      text: '开始',
+      value: 'start',
+    },
+    {
+      text: '结束',
+      value: 'end',
+    },
+  ] as EventType[];
+
+  const taskEvents = [
+    {
+      text: '创建',
+      value: 'create',
+    },
+    {
+      text: '签收',
+      value: 'assignment',
+    },
+    {
+      text: '完成',
+      value: 'complete',
+    },
+    {
+      text: '删除',
+      value: 'delete',
+    },
+  ] as EventType[];
+
+  const [listenerType, setListenerType] = useState('listener' as ListenerType);
 
   const handleSubmit = (e: React.FormEvent) => {
     if (e && e.preventDefault) {
@@ -61,7 +99,6 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
       });
     }, 0);
   };
-
 
   const handleConfigListener = () => {
     setConfigListenerState({
@@ -90,7 +127,14 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
           {form.getFieldDecorator('form', {})(<Input onBlur={handleSubmit}/>)}
         </Item>
         <Item label="执行监听器" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('executionListener', {})(<>0<Button type="link" onClick={handleConfigListener}>配置</Button></>)}
+          {form.getFieldDecorator('executionListener', {})(
+            <>{executionListenerData.length}
+              <Button type="link" onClick={_ => {
+                setListenerType('execution');
+                handleConfigListener();
+              }}>配置</Button>
+            </>
+          )}
         </Item>
       </>
     );
@@ -105,7 +149,14 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
           })(<Input onBlur={handleSubmit}/>)}
         </Item>
         <Item label="执行监听器" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('executionListener', {})(<>0<Button type="link">配置</Button></>)}
+          {form.getFieldDecorator('executionListener', {})(
+            <>{executionListenerData.length}
+              <Button type="link" onClick={_ => {
+                setListenerType('execution');
+                handleConfigListener();
+              }}>配置</Button>
+            </>
+          )}
         </Item>
       </>
     );
@@ -129,17 +180,43 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
           )}
         </Item>
         <Item label="任务监听器" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('taskListener', {})(<>0<Button type="link" onClick={handleConfigListener}>配置</Button></>)}
+          {form.getFieldDecorator('taskListener', {})(
+            <>
+              {taskListenerData.length}
+              <Button type="link" onClick={_ => {
+                setListenerType('task');
+                handleConfigListener();
+              }}>配置</Button>
+            </>
+          )}
         </Item>
         <Item label="执行监听器" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('executionListener', {})(<>0<Button type="link" onClick={handleConfigListener}>配置</Button></>)}
+          {form.getFieldDecorator('executionListener', {})(
+            <>
+              {executionListenerData.length}
+              <Button type="link" onClick={_ => {
+                setListenerType('execution');
+                handleConfigListener();
+              }}>配置</Button>
+            </>
+          )}
         </Item>
       </>
     );
   };
 
+  const renderGatewayDetail = () => {
+    return <>
+      <Item label="名称" {...inlineFormItemLayout}>
+        {form.getFieldDecorator('name', {
+          initialValue: model.name,
+        })(<Input onBlur={handleSubmit}/>)}
+      </Item>
+    </>
+  };
+
   const renderEdgeDetail = () => {
-    const {label = '', shape = 'flow-smooth'} = item.getModel();
+    const {label = '', shape = 'flow-smooth', condition} = item.getModel();
 
     return (
       <>
@@ -154,10 +231,9 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
           })(renderEdgeShapeSelect())}
         </Item>
         <Item label="流转条件" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('a')(<Input onBlur={handleSubmit}/>)}
-        </Item>
-        <Item label="执行监听器" {...inlineFormItemLayout}>
-          {form.getFieldDecorator('executionListener', {})(<>0<Button type="link">配置</Button></>)}
+          {form.getFieldDecorator('condition', {
+            initialValue: condition,
+          })(<Input onBlur={handleSubmit}/>)}
         </Item>
       </>
     );
@@ -176,20 +252,63 @@ const DetailForm: React.FC<DetailFormProps> = ({form, type, propsAPI}) => {
   };
 
   return (
-    <Card type="inner" size="small" title={upperFirst(type)} bordered={false}>
+    <Card type="inner" size="small" title='节点信息' bordered={false}>
       <Form onSubmit={handleSubmit}>
-        {model.type === 'task' && renderTaskDetail()}
         {model.type === 'start' && renderStartDetail()}
         {model.type === 'end' && renderEndDetail()}
+        {model.type === 'task' && renderTaskDetail()}
+        {model.type === 'gateway' && renderGatewayDetail()}
         {type === 'edge' && renderEdgeDetail()}
         {type === 'group' && renderGroupDetail()}
       </Form>
-      <ConfigAssigneeModal visible={assigneeModalState.visible} handleCancel={() => {
-        setAssigneeModalState({visible: false});
-      }}/>
-      <ConfigListenerModal visible={configListenerState.visible} handleCancel={() => {
-        setConfigListenerState({visible: false});
-      }}/>
+      {
+        ['task'].indexOf(item.model.type) !== -1 &&
+        <ConfigAssigneeModal visible={assigneeModalState.visible} handleCancel={() => {
+          setAssigneeModalState({visible: false});
+        }}/>
+      }
+      {
+        ['start', 'task', 'end'].indexOf(item.model.type) !== -1 &&
+        <ConfigListenerModal
+          type={listenerType}
+          listenerData={listenerType === 'task' ? taskListenerData : executionListenerData}
+          events={listenerType === 'task' ? taskEvents : executionEvents}
+          visible={configListenerState.visible}
+          handleCancel={() => {
+            setConfigListenerState({visible: false});
+          }}
+          handleSave={(data) => {
+            form.validateFieldsAndScroll((err, values) => {
+              const item = getSelected()[0];
+              if (!item) {
+                return;
+              }
+              values['label'] = values['name'];
+              if (listenerType === 'execution') {
+                setExecutionListenerData(data);
+                executeCommand(() => {
+                  update(item, {
+                    ...values,
+                    executionListenerData: data,
+                  });
+                });
+              } else if (listenerType === 'task') {
+                setTaskListenerData(data);
+                executeCommand(() => {
+                  update(item, {
+                    ...values,
+                    taskListenerData: data,
+                  });
+                });
+              }
+            });
+            setConfigListenerState({
+              ...configListenerState,
+              visible: false,
+            });
+          }}
+        />
+      }
     </Card>
   );
 };

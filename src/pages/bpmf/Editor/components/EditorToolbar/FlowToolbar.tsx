@@ -1,17 +1,23 @@
-import {Divider, Icon, Tooltip} from 'antd';
+import {Button, Divider, Tooltip} from 'antd';
 import React from 'react';
 import {Toolbar} from 'gg-editor';
 import ToolbarButton from './ToolbarButton';
 import styles from './index.less';
 
-const FlowToolbar = () => (
-  <Toolbar className={styles.toolbar} style={{paddingLeft: '8px'}}>
+interface Props {
+  onSave: () => void;
+  saveAble: boolean;
+}
+
+const FlowToolbar:React.FC<Props> = ({ onSave, saveAble }) => {
+
+  return <Toolbar className={styles.toolbar} style={{paddingLeft: '8px'}}>
     <Tooltip
       title="保存"
       placement="bottom"
       overlayClassName={styles.tooltip}
     >
-      <Icon type="save" />
+      <Button type="link" icon="save" onClick={() => onSave()} disabled={!saveAble}/>
     </Tooltip>
     <Divider type="vertical" />
     <ToolbarButton command="undo" text="撤销" />
@@ -26,13 +32,13 @@ const FlowToolbar = () => (
     <ToolbarButton command="autoZoom" icon="fit-map" text="自适应" />
     <ToolbarButton command="resetZoom" icon="actual-size" text="实际大小" />
     <Divider type="vertical" />
-    <ToolbarButton command="toBack" icon="to-back" text="To Back" />
-    <ToolbarButton command="toFront" icon="to-front" text="To Front" />
+    <ToolbarButton command="toBack" icon="to-back" text="置于底层" />
+    <ToolbarButton command="toFront" icon="to-front" text="置于顶层" />
     <Divider type="vertical" />
-    <ToolbarButton command="multiSelect" icon="multi-select" text="Multi Select" />
-    <ToolbarButton command="addGroup" icon="group" text="Add Group" />
-    <ToolbarButton command="unGroup" icon="ungroup" text="Ungroup" />
+    <ToolbarButton command="multiSelect" icon="multi-select" text="多选" />
+    <ToolbarButton command="addGroup" icon="group" text="添加分组" />
+    <ToolbarButton command="unGroup" icon="ungroup" text="取消分组" />
   </Toolbar>
-);
+};
 
 export default FlowToolbar;

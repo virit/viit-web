@@ -17,10 +17,10 @@ const FlowDetailPanel = () => {
       <DetailForm type="group" />
     </GroupPanel>
     <MultiPanel>
-      <Card type="inner" size="small" title="Multi Select" bordered={false} />
+      <Card type="inner" size="small" title="" bordered={false} />
     </MultiPanel>
     <CanvasPanel>
-      <Card type="inner" size="small" title="Canvas" bordered={false} />
+      <Card type="inner" size="small" title="" bordered={false} />
     </CanvasPanel>
   </DetailPanel>
 };

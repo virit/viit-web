@@ -192,9 +192,15 @@ export default {
               path: '/bpmf',
               routes: [
                 {
-                  name: '流程编辑器',
+                  name: '流程模型',
                   icon: 'smile',
-                  path: '/bpmf/editor',
+                  path: '/bpmf/model',
+                  component: './bpmf/model',
+                },
+                {
+                  name: '流程编辑',
+                  path: '/bpmf/editor/:id',
+                  hideInMenu: true,
                   component: './bpmf/Editor',
                 },
               ],
@@ -263,7 +269,7 @@ export default {
   // chainWebpack: webpackPlugin,
   proxy: {
     '/api': {
-      target: 'http://47.101.155.230:8080/',
+      target: 'http://localhost:8080/',
       changeOrigin: true,
       pathRewrite: {
         '^/server': '',
