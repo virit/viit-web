@@ -6,6 +6,7 @@ import {fakeAccountLogin, getFakeCaptcha, logOut} from '@/services/login';
 import {setAuthority} from '@/utils/authority';
 import {getPageQuery} from '@/utils/utils';
 import StatusCode from "@/utils/StatusCode";
+import {message} from "antd";
 
 export interface StateType {
   status?: 'ok' | 'error';
@@ -40,7 +41,6 @@ const Model: LoginModelType = {
         type: 'changeLoginStatus',
         payload: response,
       });
-      console.log(response.code === StatusCode.SUCCESS);
       // Login successfully
       if (response.code === StatusCode.SUCCESS) {
         const urlParams = new URL(window.location.href);
@@ -59,6 +59,8 @@ const Model: LoginModelType = {
           }
         }
         yield put(routerRedux.replace(redirect || '/'));
+      } else if (response.code === StatusCode.USERNAME_OR_PASSWORD_ERROR) {
+        message.error("用户名或密码错误");
       }
     },
 

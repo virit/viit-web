@@ -272,8 +272,16 @@ export default {
       target: 'http://localhost:8080/',
       changeOrigin: true,
       pathRewrite: {
-        '^/server': '',
+        '^/api': '/',
       },
+      ws: true,
+    },
+    '/api/ws': {
+      target: 'ws://localhost:8080/',
+      pathRewrite: {
+        '^/api': '/',
+      },
+      ws: true,
     },
   },
 } as IConfig;

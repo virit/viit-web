@@ -1,3 +1,4 @@
 export default {
   SUCCESS: 2000,
+  USERNAME_OR_PASSWORD_ERROR: 4002,
 };

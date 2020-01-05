@@ -1,9 +1,11 @@
-import { Reducer } from 'redux';
-import { Subscription, Effect } from 'dva';
+import {Reducer} from 'redux';
+import {Effect, Subscription} from 'dva';
 
-import { NoticeIconData } from '@/components/NoticeIcon';
-import { queryNotices } from '@/services/user';
-import { ConnectState } from './connect.d';
+import {NoticeIconData} from '@/components/NoticeIcon';
+import {queryNotices} from '@/services/user';
+import {ConnectState} from './connect.d';
+import WebSocketClient from "@/utils/viit/WebSocketClient";
+import {getContextUrl} from "@/utils/request";
 
 export interface NoticeItem extends NoticeIconData {
   id: string;
@@ -14,6 +16,7 @@ export interface NoticeItem extends NoticeIconData {
 export interface GlobalModelState {
   collapsed: boolean;
   notices: NoticeItem[];
+  websocket?: WebSocketClient;
 }
 
 export interface GlobalModelType {
@@ -28,6 +31,7 @@ export interface GlobalModelType {
     changeLayoutCollapsed: Reducer<GlobalModelState>;
     saveNotices: Reducer<GlobalModelState>;
     saveClearedNotices: Reducer<GlobalModelState>;
+    setupWebSocket: Reducer<GlobalModelState>;
   };
   subscriptions: { setup: Subscription };
 }
@@ -38,6 +42,7 @@ const GlobalModel: GlobalModelType = {
   state: {
     collapsed: false,
     notices: [],
+    websocket: undefined,
   },
 
   effects: {
@@ -113,13 +118,21 @@ const GlobalModel: GlobalModelType = {
         collapsed: false,
         ...state,
         notices: payload,
-      };
+      } as GlobalModelState;
     },
     saveClearedNotices(state = { notices: [], collapsed: true }, { payload }): GlobalModelState {
       return {
         collapsed: false,
         ...state,
         notices: state.notices.filter((item): boolean => item.type !== payload),
+      };
+    },
+    setupWebSocket(state = { notices: [], collapsed: true , websocket: undefined}): GlobalModelState {
+
+      const ws = new WebSocketClient(getContextUrl('/ws/common'));
+      return {
+        ...state,
+        websocket: ws,
       };
     },
   },

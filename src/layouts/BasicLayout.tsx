@@ -134,13 +134,19 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
     });
   };
 
-
   useEffect(() => {
     // 这里是一个演示用法
     // 真实项目中建议使用 dva dispatch 或者 umi-request
     getRouter().then((response) => {
       const router = response.data;
       setMenuData(router);
+    });
+  }, []);
+
+  // 创建websocket
+  useEffect(() => {
+    dispatch({
+      type: 'global/setupWebSocket',
     });
   }, []);
 
@@ -156,6 +162,7 @@ const BasicLayout: React.FC<BasicLayoutProps> = props => {
   const authorized = getAuthorityFromRouter(props.route.routes, location.pathname || '/') || {
     authority: undefined,
   };
+
   return (
     <ProLayout
       logo={logo}
